@@ -19,8 +19,11 @@ export function TopBar(): ReactElement {
   const current = titleOf(location.pathname, t);
 
   return (
-    <header className="drag-region flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-5">
-      <nav className="no-drag flex min-w-0 items-center gap-1.5 text-sm" aria-label="breadcrumb">
+    <header
+      data-tauri-drag-region
+      className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-5"
+    >
+      <nav className="flex min-w-0 items-center gap-1.5 text-sm" aria-label="breadcrumb">
         <Link to="/" className="shrink-0 text-ink-faint transition-colors hover:text-ink">
           {t("nav.home")}
         </Link>
@@ -32,13 +35,14 @@ export function TopBar(): ReactElement {
         ) : null}
       </nav>
 
-      <div className="flex-1" />
+      {/* 中间的空白弹性区也标为拖拽区：顶栏最容易被抓住的地方 */}
+      <div className="flex-1" data-tauri-drag-region />
 
       <button
         type="button"
         onClick={() => setDrawerOpen(!drawerOpen)}
         className={clsx(
-          "no-drag btn-quiet relative h-9 rounded-xl px-3",
+          "btn-quiet relative h-9 rounded-xl px-3",
           drawerOpen && "bg-surface-subtle text-ink",
         )}
         title={t("nav.taskCenter")}
