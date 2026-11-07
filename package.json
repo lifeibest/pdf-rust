@@ -1,0 +1,51 @@
+{
+  "name": "pdf-zhizhuan",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "PDF智转 - Tauri + Rust 桌面端 PDF 工具箱",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "pdfium": "node scripts/download-pdfium.mjs",
+    "pdfium:force": "node scripts/download-pdfium.mjs --force",
+    "pretauri": "node scripts/download-pdfium.mjs",
+    "tauri": "tauri",
+    "typecheck": "tsc --noEmit",
+    "test:rust": "cd src-tauri && cargo test",
+    "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
+    "sign:macos": "bash scripts/sign-macos.sh"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-log": "^2",
+    "@tauri-apps/plugin-notification": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-store": "^2",
+    "clsx": "^2.1.1",
+    "i18next": "^23.16.8",
+    "lucide-react": "^0.469.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-i18next": "^15.4.0",
+    "react-router-dom": "^7.1.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^6.0.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
+  }
+}

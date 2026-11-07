@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 主题令牌：tailwind.config.ts 中的 surface / line / ink 都引用这里的变量，
+   因此换主题只需要改这一处，组件里不必写 dark: 前缀。 */
+@layer base {
+  :root {
+    --surface: 255 255 255;
+    --surface-muted: 246 247 251;
+    --surface-subtle: 238 240 247;
+    --line: 226 230 240;
+    --ink: 17 24 39;
+    --ink-muted: 90 100 122;
+    --ink-faint: 148 156 175;
+    color-scheme: light;
+  }
+
+  .dark {
+    --surface: 19 22 33;
+    --surface-muted: 13 15 24;
+    --surface-subtle: 28 32 46;
+    --line: 43 48 66;
+    --ink: 237 240 248;
+    --ink-muted: 163 172 194;
+    --ink-faint: 116 126 152;
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-surface-muted font-sans text-ink antialiased;
+    /* macOS 上禁用橡皮筋回弹与文本选中带来的拖拽干扰 */
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 输入类控件仍需要可选中 */
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-line;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-faint;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* 窗口拖拽区靠 `data-tauri-drag-region` 属性实现（Tauri 会拦截该元素上的 mousedown 调用 startDragging），
+     Electron 的 `-webkit-app-region: drag` 在 Tauri 里无效。只有带该属性的元素本身可拖，
+     其子元素（按钮 / 链接）不会触发拖拽，因此无需额外的 no-drag 标记。 */
+
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-card;
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2
+      text-sm font-medium transition-colors duration-150
+      disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700;
+  }
+
+  .btn-ghost {
+    @apply btn border border-line bg-surface text-ink hover:bg-surface-subtle;
+  }
+
+  .btn-quiet {
+    @apply btn text-ink-muted hover:bg-surface-subtle hover:text-ink;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink
+      outline-none transition-colors placeholder:text-ink-faint
+      focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-ink-muted;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-line
+      bg-surface-subtle px-2.5 py-0.5 text-xs text-ink-muted;
+  }
+}

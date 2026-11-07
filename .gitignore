@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# PDFium 动态库由 scripts/download-pdfium.mjs 按需下载，不入库
+src-tauri/binaries/
+
+# 打包与临时产物
+src-tauri/target/
+src-tauri/gen/schemas
+release/
+*.tmp

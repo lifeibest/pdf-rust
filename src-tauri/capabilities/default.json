@@ -1,0 +1,17 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "主窗口能力集合：核心 API + 对话框 / 打开文件 / 本地存储 / 日志 / 通知",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-title",
+    "core:webview:default",
+    "dialog:default",
+    "opener:default",
+    "store:default",
+    "log:default",
+    "notification:default"
+  ]
+}
