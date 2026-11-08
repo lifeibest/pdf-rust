@@ -127,13 +127,13 @@
   <div class="wrap">
     <div class="badge-row">
       <span class="badge b-brand">v0.1.0</span>
-      <span class="badge">macOS 桌面应用</span>
-      <span class="badge">本地优先 · 不上传</span>
+      <span class="badge">macOS · Windows 桌面应用</span>
+      <span class="badge">隐私安全 · 全程不联网</span>
       <span class="badge">Tauri 2 + Rust + React 19</span>
     </div>
     <h1><span class="grad">PDF智转</span> 项目说明文档</h1>
     <p class="subtitle">
-      一款完全在本机完成计算的 PDF 工具箱。所有 PDF 处理逻辑都在 Rust 侧执行，
+      一款隐私安全、全程不联网、完全在本机完成计算的 PDF 工具箱。所有 PDF 处理逻辑都在 Rust 侧执行，
       以内嵌的 PDFium 作为唯一引擎，前端只负责界面与任务编排。支持合并、拆分、旋转、
       PDF 转图片、图片转 PDF 五大功能。
     </p>
@@ -177,7 +177,7 @@
         <span class="tag">chromium/8125</span>
         <span class="tag">thread_safe</span>
       </p>
-      <p style="margin-top:10px">唯一 PDF 引擎，运行时动态绑定 <code>libpdfium.dylib</code>（不静态链接）。合并 / 拆分 / 旋转 / 栅格化 / 图片建页全部共用它，保证输出行为一致。</p>
+      <p style="margin-top:10px">唯一 PDF 引擎，运行时按平台动态绑定 <code>libpdfium.dylib</code>（macOS）/ <code>pdfium.dll</code>（Windows）/ <code>libpdfium.so</code>（Linux），不静态链接。合并 / 拆分 / 旋转 / 栅格化 / 图片建页全部共用它，保证输出行为一致。</p>
     </div>
     <div class="card">
       <h4>⚛️ 前端</h4>
@@ -286,7 +286,7 @@
     </div>
     <div class="card">
       <h4><span class="accent-split">◈</span> 拆分 PDF <span class="pill">organize</span></h4>
-      <p>四种模式：每 N 页一份 / 每页一份 / 按页范围表达式拆分 / 提取指定页。可选打包为 zip；非打包时按 <code>{stem}_part001_p1-3.pdf</code> 规则命名。</p>
+      <p>四种模式：每 N 页一份 / 每页一份 / 按页范围表达式拆分 / 提取指定页。可选打包为 zip；非打包时按 <code>{stem}_part001_p1-3_pdfai.cn.pdf</code> 规则命名。</p>
     </div>
     <div class="card">
       <h4><span class="accent-rotate">◈</span> 旋转 PDF <span class="pill">organize</span></h4>
@@ -294,7 +294,7 @@
     </div>
     <div class="card">
       <h4><span class="accent-pdf2img">◈</span> PDF 转图片 <span class="pill">convert</span></h4>
-      <p>把 PDF 页面栅格化为图片。选项：页范围、DPI、格式（png/jpg/webp）、质量、最长边限制、是否打包 zip。文件名按 <code>{stem}_p001.png</code> 规则生成。</p>
+      <p>把 PDF 页面栅格化为图片。选项：页范围、DPI、格式（png/jpg/webp）、质量、最长边限制、是否打包 zip。文件名按 <code>{stem}_p001_pdfai.cn.png</code> 规则生成。</p>
     </div>
     <div class="card">
       <h4><span class="accent-img2pdf">◈</span> 图片转 PDF <span class="pill">convert</span></h4>
@@ -302,7 +302,7 @@
     </div>
     <div class="card">
       <h4>⚙️ 设置 &amp; ℹ️ 关于 <span class="pill">system</span></h4>
-      <p>设置：语言 / 主题（light·dark·system）/ 输出策略（remember·ask·fixed）/ 图片默认值 / 完成通知 / 缩略图尺寸 / 清理缓存 / 恢复默认。关于：版本、Tauri/PDFium 信息、引擎重新检测、开源许可清单。</p>
+      <p>设置：语言 / 主题（light·dark·system）/ 输出策略（remember·ask·fixed）/ 图片默认值 / 完成通知 / 缩略图尺寸 / 清理缓存 / 恢复默认。关于：头卡含品牌名 / 标语 / 官网·API 入口 / 版本 chip + 公众号二维码；构建信息、开源许可、PDF 引擎三块默认折叠（可展开，引擎支持重新检测）；另含路径信息与隐私说明。</p>
     </div>
   </div>
 
@@ -387,12 +387,12 @@
   <p><code>libpdfium</code> 运行时按顺序动态绑定，<code>init()</code> 幂等：</p>
   <ol class="clean" style="padding-left:22px">
     <li>环境变量 <code>PDFIUM_PATH</code></li>
-    <li>Tauri <code>resource_dir</code>（打包后 <code>*.app/Contents/Resources/libpdfium.dylib</code>）</li>
-    <li>开发期 <code>src-tauri/binaries/libpdfium.dylib</code></li>
+    <li>Tauri <code>resource_dir</code>（打包后随平台落地：macOS <code>*.app/Contents/Resources/libpdfium.dylib</code>、Windows 安装目录 <code>pdfium.dll</code>）</li>
+    <li>开发期 <code>src-tauri/binaries/&lt;平台库名&gt;</code></li>
     <li>可执行文件同级目录</li>
     <li>系统已安装的 libpdfium</li>
   </ol>
-  <p>失败时返回 <code>PdfiumNotFound(searched)</code> 带上全部搜索路径，关于页原样展示，用户放入 dylib 后点「重新检测」（<code>reload_pdfium</code>）即可，无需重启。</p>
+  <p>失败时返回 <code>PdfiumNotFound(searched)</code> 带上全部搜索路径，关于页原样展示，用户放入对应平台库文件后点「重新检测」（<code>reload_pdfium</code>）即可，无需重启。当前平台的库文件名由 <code>library_file_name()</code> 给出。</p>
 
   <h3>缩略图缓存</h3>
   <p>渲染结果以 PNG 落在 app cache 目录，缓存键为 <code>(source, max_px)</code>；前端用 <code>convertFileSrc</code> 生成 <code>asset://</code> URL 直接 <code>&lt;img&gt;</code> 读取，避免 base64 过 IPC。<code>ThumbOut.page</code> 为 0-based，展示时 +1。</p>
@@ -404,6 +404,9 @@
     <span class="tag">pick_files</span><span class="tag">pick_dir</span><span class="tag">pick_save</span><span class="tag">reveal</span><span class="tag">open_path</span><span class="tag">classify_path</span><span class="tag">ensure_dir</span><span class="tag">stat_paths</span>
     <span class="tag">app_info</span><span class="tag">pdfium_status</span><span class="tag">reload_pdfium</span>
   </p>
+
+  <h3>默认输出命名（品牌后缀）</h3>
+  <p>未填自定义名称时，两个命名出口 <code>resolve_output_path</code>（单产出 / zip 兜底）与 <code>resolve_batch_path</code>（拆分 / 导出逐文件）会统一在扩展名前插入品牌后缀 <code>_pdfai.cn</code>，如 <code>report_merged.pdf → report_merged_pdfai.cn.pdf</code>、<code>doc_p001.png → doc_p001_pdfai.cn.png</code>，便于识别文件来源。<strong>填了自定义名时不加后缀</strong>，完全用用户的名字。</p>
 </section>
 
 <!-- ===================== 构建与打包 ===================== -->
@@ -418,7 +421,7 @@
       <tr><td><code>pnpm dev</code></td><td>Vite 开发服务器（配合 <code>pnpm tauri dev</code>）</td></tr>
       <tr><td><code>pnpm tauri dev</code></td><td>开发模式运行桌面应用</td></tr>
       <tr><td><code>pnpm build</code></td><td><code>tsc && vite build</code> 产出前端 dist</td></tr>
-      <tr><td><code>pnpm tauri build</code></td><td>打包 macOS <code>.app</code> + <code>.dmg</code></td></tr>
+      <tr><td><code>pnpm tauri build</code></td><td>按当前平台打包：macOS <code>.app</code>+<code>.dmg</code>，Windows <code>.exe</code>（NSIS）</td></tr>
       <tr><td><code>pnpm tauri build --bundles app</code></td><td>只打 <code>.app</code>（跳过 DMG，迭代更快）</td></tr>
       <tr><td><code>pnpm pdfium</code> / <code>pdfium:force</code></td><td>下载 / 强制重下 libpdfium（<code>pretauri</code> 会自动触发）</td></tr>
       <tr><td><code>pnpm typecheck</code></td><td><code>tsc --noEmit</code>，双语 key 结构同步校验</td></tr>
@@ -427,12 +430,43 @@
     </tbody>
   </table>
 
-  <h3>Bundle 配置要点（<code>tauri.conf.json</code>）</h3>
+  <h3>Bundle 配置要点（平台拆分）</h3>
+  <p>通用配置放在 <code>tauri.conf.json</code>，平台专属的 <code>targets</code> / <code>resources</code> / 安装包参数拆分到 <code>tauri.&lt;platform&gt;.conf.json</code>，Tauri CLI 按构建平台自动合并。这样每个平台只引用自己那份 PDFium 库，不会因缺失其它平台的库而构建失败。</p>
   <ul class="clean">
-    <li><code>identifier</code>：<code>cn.pdfai.desktop</code>（对应官网 pdfai.cn）；<code>productName</code>：PDF智转；npm / Cargo 包名：<code>pdfai-cn</code>。</li>
-    <li><code>targets</code>：<code>["app", "dmg"]</code>；分类 <code>public.app-category.productivity</code>。</li>
-    <li><code>resources</code>：把 <code>binaries/libpdfium.dylib</code> 拷入 <code>.app</code> 的 Resources。</li>
-    <li>macOS 最低系统 <code>10.15</code>；<code>signingIdentity: null</code>（默认 ad-hoc）；DMG 内置背景布局与「拖入 Applications」引导位。</li>
+    <li><strong>通用（<code>tauri.conf.json</code>）</strong>：<code>identifier</code> = <code>cn.pdfai.desktop</code>（对应官网 pdfai.cn）、<code>productName</code> = PDF智转、npm / Cargo 包名 = <code>pdfai-cn</code>、分类 <code>public.app-category.productivity</code>、图标、CSP、asset scope。</li>
+    <li><strong>macOS（<code>tauri.macos.conf.json</code>）</strong>：<code>targets: ["app","dmg"]</code>、<code>resources</code> 拷入 <code>libpdfium.dylib</code>、最低系统 <code>10.15</code>、<code>signingIdentity: null</code>（ad-hoc）、DMG 布局与「拖入 Applications」引导位。</li>
+    <li><strong>Windows（<code>tauri.windows.conf.json</code>）</strong>：<code>targets: ["nsis"]</code>、<code>resources</code> 拷入 <code>pdfium.dll</code>、<code>webviewInstallMode: downloadBootstrapper</code>（缺 WebView2 时自动装）、NSIS 安装模式 <code>currentUser</code>（免 UAC）、简中/英文安装界面。</li>
+    <li><strong>Linux</strong>：暂不在打包范围。</li>
+  </ul>
+
+  <h3>跨平台自动构建（GitHub Actions）</h3>
+  <p>Tauri / Rust 不能交叉编译，Windows 安装包必须在 Windows 上构建。<code>.github/workflows/build.yml</code> 用云端矩阵一次产出 mac + Windows 两个平台：</p>
+  <ul class="clean">
+    <li><strong>触发</strong>：推送 <code>v*</code> 标签 → 构建并自动创建 Release 草稿；或在 Actions 页手动 <code>workflow_dispatch</code> → 仅构建，产物存为 Artifact。</li>
+    <li><strong>矩阵</strong>：<code>macos-latest</code>（arm64，mac-univ 引擎同时覆盖 Intel）→ <code>.dmg</code>；<code>windows-latest</code>（x64）→ NSIS <code>.exe</code>。</li>
+    <li><strong>步骤</strong>：checkout → pnpm 9 / Node 20 → Rust stable（<code>Swatinem/rust-cache</code>）→ <code>pnpm install --frozen-lockfile</code> → <code>pnpm pdfium</code>（按 runner 平台下载对应引擎）→ <code>pnpm tauri build</code> → 上传产物。</li>
+    <li><strong>汇总发布</strong>：<code>release</code> 作业下载两端产物，用 <code>softprops/action-gh-release</code> 建 Release 草稿。</li>
+  </ul>
+  <div class="note warn">仓库当前托管在阿里云效 Codeup，GitHub Actions 仅在代码推送到 <strong>GitHub</strong> 后才会触发；需另建 GitHub 远程并 <code>push</code> 代码与标签。</div>
+
+  <h3>发布到 GitHub 并触发构建</h3>
+  <p>首次需要把代码镜像到 GitHub（不影响原有的 Codeup <code>origin</code>）；之后每次发版只需重新打一个 <code>v*</code> 标签。</p>
+  <pre><span class="c"># 1) 在 github.com 手动建一个空仓库（不要勾选自动生成 README），例如 pdfai-cn</span>
+
+<span class="c"># 2) 添加 GitHub 远程并推送（保留原 Codeup origin 不动）</span>
+<span class="k">git</span> remote add github git@github.com:<span class="s">&lt;你的用户名&gt;</span>/pdfai-cn.git
+<span class="k">git</span> push github main
+
+<span class="c"># 3) 打标签触发自动构建（Actions 页可看进度，首次约 10–20 分钟）</span>
+<span class="k">git</span> tag v0.1.0
+<span class="k">git</span> push github v0.1.0
+
+<span class="c"># 完成后到 Releases 页取草稿：PDF智转_..._aarch64.dmg + PDF智转_..._setup.exe</span></pre>
+  <ul class="clean">
+    <li><strong>前置</strong>：本机已配置 GitHub SSH key（或用 HTTPS 远程）；仓库需允许 Actions（公开仓免费，私有仓有免费额度）。</li>
+    <li><strong>发新版</strong>：先改版本号（<code>tauri.conf.json</code> / <code>Cargo.toml</code> / <code>package.json</code> 保持一致），提交后再打新标签。</li>
+    <li><strong>仅构建不发版</strong>：到 Actions 页对该 workflow 点 “Run workflow”（<code>workflow_dispatch</code>），产物在该次运行的 Artifacts 里下载。</li>
+    <li><strong>不想用 GitHub</strong>：若继续留在 Codeup，可改用阿里云效流水线（Flow），YAML 格式不同，需单独配置。</li>
   </ul>
 
   <h3>测试</h3>
@@ -443,7 +477,7 @@
   </ul>
 
   <div class="note">
-    <strong>签名与分发</strong>：当前为 ad-hoc 签名，本地运行没问题；分发给他人时首次打开需在「系统设置 → 隐私与安全性」放行，或后续接入 Apple Developer ID 签名 + 公证（notarization）。
+    <strong>签名与分发</strong>：macOS 当前 ad-hoc 签名、Windows 未签名。分发后 macOS 首次打开需在「系统设置 → 隐私与安全性」放行，Windows 会弹 SmartScreen（点「仍要运行」）。正式分发需接入 Apple Developer ID + 公证（notarization）、Windows 代码签名证书。
   </div>
 </section>
 
@@ -468,7 +502,7 @@
     <div class="opt-num">1</div>
     <div>
       <strong>代码签名与公证<span class="prio high">高</span></strong>
-      <p style="color:var(--ink-faint);margin:4px 0 0">当前 ad-hoc 签名，分发给其他 Mac 用户会被 Gatekeeper 拦截。接入 Apple Developer ID 签名 + <code>notarytool</code> 公证，并考虑 Sparkle/Tauri updater 做自动更新。</p>
+      <p style="color:var(--ink-faint);margin:4px 0 0">当前两端均未正式签名：macOS ad-hoc 会被 Gatekeeper 拦截，Windows 会触发 SmartScreen 警告。接入 Apple Developer ID 签名 + <code>notarytool</code> 公证、Windows OV/EV 代码签名证书，并考虑 Sparkle/Tauri updater 做自动更新。</p>
     </div>
   </div>
 
@@ -491,8 +525,8 @@
   <div class="opt-item">
     <div class="opt-num">4</div>
     <div>
-      <strong>跨平台支持<span class="prio mid">中</span></strong>
-      <p style="color:var(--ink-faint);margin:4px 0 0">目前只产出 macOS。PDFium 下载脚本与 bundle 配置需补 Windows（<code>.exe</code>/NSIS）与 Linux（AppImage/deb）目标，图标也要补 <code>.ico</code> 的实际生成。</p>
+      <strong>跨平台分发打磨<span class="prio mid">中</span></strong>
+      <p style="color:var(--ink-faint);margin:4px 0 0">mac + Windows 打包与 CI 已就绪（平台配置拆分 + GitHub Actions，<code>.ico</code> 图标已生成）。待完善：① macOS 目前仅 arm64，可加 <code>x86_64</code>/universal target 覆盖 Intel Mac；② 两端均未签名（见第 1 项）；③ Linux 暂不在范围。</p>
     </div>
   </div>
 

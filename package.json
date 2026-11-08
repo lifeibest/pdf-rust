@@ -12,6 +12,7 @@
     "pdfium:force": "node scripts/download-pdfium.mjs --force",
     "pretauri": "node scripts/download-pdfium.mjs",
     "tauri": "tauri",
+    "build:mac-universal": "pnpm tauri build --target universal-apple-darwin",
     "typecheck": "tsc --noEmit",
     "test:rust": "cd src-tauri && cargo test",
     "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
