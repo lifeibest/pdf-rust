@@ -423,6 +423,7 @@
       <tr><td><code>pnpm build</code></td><td><code>tsc && vite build</code> 产出前端 dist</td></tr>
       <tr><td><code>pnpm tauri build</code></td><td>按当前平台打包：macOS <code>.app</code>+<code>.dmg</code>，Windows <code>.exe</code>（NSIS）</td></tr>
       <tr><td><code>pnpm tauri build --bundles app</code></td><td>只打 <code>.app</code>（跳过 DMG，迭代更快）</td></tr>
+      <tr><td><code>pnpm build:mac-universal</code></td><td>打 macOS 通用二进制 <code>.app</code>+<code>.dmg</code>（arm64 + x86_64，Intel 与 Apple Silicon 通吃；需先 <code>rustup target add x86_64-apple-darwin</code>）</td></tr>
       <tr><td><code>pnpm pdfium</code> / <code>pdfium:force</code></td><td>下载 / 强制重下 libpdfium（<code>pretauri</code> 会自动触发）</td></tr>
       <tr><td><code>pnpm typecheck</code></td><td><code>tsc --noEmit</code>，双语 key 结构同步校验</td></tr>
       <tr><td><code>pnpm test:rust</code> / <code>lint:rust</code></td><td>cargo test / clippy <code>-D warnings</code></td></tr>
@@ -443,8 +444,8 @@
   <p>Tauri / Rust 不能交叉编译，Windows 安装包必须在 Windows 上构建。<code>.github/workflows/build.yml</code> 用云端矩阵一次产出 mac + Windows 两个平台：</p>
   <ul class="clean">
     <li><strong>触发</strong>：推送 <code>v*</code> 标签 → 构建并自动创建 Release 草稿；或在 Actions 页手动 <code>workflow_dispatch</code> → 仅构建，产物存为 Artifact。</li>
-    <li><strong>矩阵</strong>：<code>macos-latest</code>（arm64，mac-univ 引擎同时覆盖 Intel）→ <code>.dmg</code>；<code>windows-latest</code>（x64）→ NSIS <code>.exe</code>。</li>
-    <li><strong>步骤</strong>：checkout → pnpm 9 / Node 20 → Rust stable（<code>Swatinem/rust-cache</code>）→ <code>pnpm install --frozen-lockfile</code> → <code>pnpm pdfium</code>（按 runner 平台下载对应引擎）→ <code>pnpm tauri build</code> → 上传产物。</li>
+    <li><strong>矩阵</strong>：<code>macos-latest</code> → <strong>通用二进制</strong> <code>.dmg</code>（<code>--target universal-apple-darwin</code>，arm64 + x86_64，Intel 与 Apple Silicon 通吃）；<code>windows-latest</code>（x64）→ NSIS <code>.exe</code>。</li>
+    <li><strong>步骤</strong>：checkout → pnpm 9 / Node 20 → Rust stable（<code>Swatinem/rust-cache</code>；macOS 额外 <code>rustup target add</code> 两个架构）→ <code>pnpm install --frozen-lockfile</code> → <code>pnpm pdfium</code>（按 runner 平台下载对应引擎）→ <code>pnpm tauri build ${{ matrix.args }}</code> → 上传产物。</li>
     <li><strong>汇总发布</strong>：<code>release</code> 作业下载两端产物，用 <code>softprops/action-gh-release</code> 建 Release 草稿。</li>
   </ul>
   <div class="note warn">仓库当前托管在阿里云效 Codeup，GitHub Actions 仅在代码推送到 <strong>GitHub</strong> 后才会触发；需另建 GitHub 远程并 <code>push</code> 代码与标签。</div>
@@ -526,7 +527,7 @@
     <div class="opt-num">4</div>
     <div>
       <strong>跨平台分发打磨<span class="prio mid">中</span></strong>
-      <p style="color:var(--ink-faint);margin:4px 0 0">mac + Windows 打包与 CI 已就绪（平台配置拆分 + GitHub Actions，<code>.ico</code> 图标已生成）。待完善：① macOS 目前仅 arm64，可加 <code>x86_64</code>/universal target 覆盖 Intel Mac；② 两端均未签名（见第 1 项）；③ Linux 暂不在范围。</p>
+      <p style="color:var(--ink-faint);margin:4px 0 0">mac + Windows 打包与 CI 已就绪（平台配置拆分 + GitHub Actions，<code>.ico</code> 图标已生成）；macOS 已产出<strong>通用二进制</strong>（arm64 + x86_64，覆盖 Intel 与 Apple Silicon）。待完善：① 两端均未签名（见第 1 项）；② Linux 暂不在范围。</p>
     </div>
   </div>
 
