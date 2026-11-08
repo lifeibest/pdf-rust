@@ -4,10 +4,10 @@ mod common;
 
 use std::path::Path;
 
-use pdf_zhizhuan_lib::error::AppError;
-use pdf_zhizhuan_lib::pdf::noop_progress;
-use pdf_zhizhuan_lib::pdf::split::{self, SplitMode, SplitOptions};
-use pdf_zhizhuan_lib::pdf::types::{OutputFile, PageSizeOpt};
+use pdfai_cn_lib::error::AppError;
+use pdfai_cn_lib::pdf::noop_progress;
+use pdfai_cn_lib::pdf::split::{self, SplitMode, SplitOptions};
+use pdfai_cn_lib::pdf::types::{OutputFile, PageSizeOpt};
 
 use common::{list_files, make_pdf, page_count, test_ctx};
 
@@ -47,9 +47,9 @@ fn every_n_splits_into_expected_group_sizes() {
     assert_eq!(
         names,
         vec![
-            "doc_part001_p1-2.pdf",
-            "doc_part002_p3-4.pdf",
-            "doc_part003_p5-6.pdf"
+            "doc_part001_p1-2_pdfai.cn.pdf",
+            "doc_part002_p3-4_pdfai.cn.pdf",
+            "doc_part003_p5-6_pdfai.cn.pdf"
         ],
         "命名应当带序号与页码区间"
     );
@@ -124,9 +124,9 @@ fn by_ranges_creates_one_file_per_token() {
     assert_eq!(
         list_files(&dir.join("out"), "pdf"),
         vec![
-            "doc_part001_p1-3.pdf",
-            "doc_part002_p4-6.pdf",
-            "doc_part003_p7-8.pdf"
+            "doc_part001_p1-3_pdfai.cn.pdf",
+            "doc_part002_p4-6_pdfai.cn.pdf",
+            "doc_part003_p7-8_pdfai.cn.pdf"
         ]
     );
 }
@@ -175,13 +175,13 @@ fn zip_packs_all_parts_into_single_archive() {
     assert_eq!(outputs[0].name, "pack.zip");
     assert!(matches!(
         outputs[0].kind,
-        pdf_zhizhuan_lib::pdf::OutputKind::Archive
+        pdfai_cn_lib::pdf::OutputKind::Archive
     ));
 
     let entries = zip_entries(&outputs[0].path);
     assert_eq!(
         entries,
-        vec!["doc_part001_p1-2.pdf", "doc_part002_p3-4.pdf"],
+        vec!["doc_part001_p1-2_pdfai.cn.pdf", "doc_part002_p3-4_pdfai.cn.pdf"],
         "压缩包内应当按页序包含全部拆分结果"
     );
     // 临时目录不应残留在缓存里

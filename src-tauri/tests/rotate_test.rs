@@ -4,10 +4,10 @@ mod common;
 
 use std::path::Path;
 
-use pdf_zhizhuan_lib::error::AppError;
-use pdf_zhizhuan_lib::pdf::noop_progress;
-use pdf_zhizhuan_lib::pdf::rotate::{self, RotateOptions};
-use pdf_zhizhuan_lib::pdf::types::{OutputFile, PageScope, PageSizeOpt};
+use pdfai_cn_lib::error::AppError;
+use pdfai_cn_lib::pdf::noop_progress;
+use pdfai_cn_lib::pdf::rotate::{self, RotateOptions};
+use pdfai_cn_lib::pdf::types::{OutputFile, PageScope, PageSizeOpt};
 
 use common::{make_pdf, page_count, page_geometry, test_ctx};
 

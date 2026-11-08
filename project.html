@@ -429,7 +429,7 @@
 
   <h3>Bundle 配置要点（<code>tauri.conf.json</code>）</h3>
   <ul class="clean">
-    <li><code>identifier</code>：<code>com.pdfzhizhuan.desktop</code>；<code>productName</code>：PDF智转。</li>
+    <li><code>identifier</code>：<code>cn.pdfai.desktop</code>（对应官网 pdfai.cn）；<code>productName</code>：PDF智转；npm / Cargo 包名：<code>pdfai-cn</code>。</li>
     <li><code>targets</code>：<code>["app", "dmg"]</code>；分类 <code>public.app-category.productivity</code>。</li>
     <li><code>resources</code>：把 <code>binaries/libpdfium.dylib</code> 拷入 <code>.app</code> 的 Resources。</li>
     <li>macOS 最低系统 <code>10.15</code>；<code>signingIdentity: null</code>（默认 ad-hoc）；DMG 内置背景布局与「拖入 Applications」引导位。</li>

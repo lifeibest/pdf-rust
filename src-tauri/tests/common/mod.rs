@@ -11,10 +11,10 @@ use std::path::{Path, PathBuf};
 use std::sync::Once;
 
 use image::{ImageBuffer, Rgba};
-use pdf_zhizhuan_lib::pdf::engine;
-use pdf_zhizhuan_lib::pdf::images_to_pdf::{self, ImagesToPdfOptions};
-use pdf_zhizhuan_lib::pdf::noop_progress;
-use pdf_zhizhuan_lib::pdf::types::{
+use pdfai_cn_lib::pdf::engine;
+use pdfai_cn_lib::pdf::images_to_pdf::{self, ImagesToPdfOptions};
+use pdfai_cn_lib::pdf::noop_progress;
+use pdfai_cn_lib::pdf::types::{
     CancelToken, ImageFitMode, OrientationOpt, PageSizeOpt, TaskCtx,
 };
 
@@ -101,7 +101,7 @@ pub fn make_pdf(dir: &Path, name: &str, pages: usize, page_size: PageSizeOpt) ->
 /// 读取 PDF 页数。
 pub fn page_count(path: &Path) -> u32 {
     init_engine();
-    pdf_zhizhuan_lib::pdf::info::probe_with_pages(path, None, false)
+    pdfai_cn_lib::pdf::info::probe_with_pages(path, None, false)
         .unwrap_or_else(|err| panic!("探测 {} 失败: {err:?}", path.display()))
         .page_count
 }
@@ -109,7 +109,7 @@ pub fn page_count(path: &Path) -> u32 {
 /// 读取 PDF 每页的 (宽, 高, 旋转角)。
 pub fn page_geometry(path: &Path) -> Vec<(f32, f32, u16)> {
     init_engine();
-    let info = pdf_zhizhuan_lib::pdf::info::probe(path, None)
+    let info = pdfai_cn_lib::pdf::info::probe(path, None)
         .unwrap_or_else(|err| panic!("探测 {} 失败: {err:?}", path.display()));
     info.pages
         .into_iter()

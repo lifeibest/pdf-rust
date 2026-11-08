@@ -3,7 +3,7 @@
 const zhCN = {
   app: {
     name: "PDF智转",
-    tagline: "本地运行、不上传的 PDF 工具箱",
+    tagline: "隐私安全、全程不联网，您最安心的 PDF 转换工具箱。",
   },
 
   nav: {
@@ -129,7 +129,6 @@ const zhCN = {
 
   img2pdf: {
     summary: "{{count}} 张图片",
-    noPreview: "受资源协议作用域限制，原始图片不做预览；输出顺序与列表一致",
     fitHint: "「完整放入」保留整张图但可能留白，「铺满」填满页面但会裁切",
   },
 
@@ -309,17 +308,17 @@ const zhCN = {
     licenseGroupEngine: "PDF 引擎",
     licenseGroupBackend: "Rust 后端依赖",
     licenseGroupFrontend: "前端依赖",
-    links: "链接",
-    repository: "项目仓库",
-    releases: "检查更新",
-    feedback: "反馈问题",
+    website: "官网",
+    apiDocs: "API 文档",
+    wechat: "微信公众号",
+    wechatHint: "扫一扫，关注微信公众号",
     privacy: "隐私说明",
     privacyText: "所有 PDF 处理都在本机完成，应用不会上传任何文件，也不联网校验授权。",
   },
 
   home: {
-    greeting: "选择一个功能开始",
-    subtitle: "全部处理在本机完成，文件不会离开你的电脑",
+    greeting: "选择功能，即刻开始",
+    subtitle: "全程在本机完成、不联网、不上传，你的文件绝不离开这台电脑",
     quickStart: "常用功能",
     engineWarning: "PDFium 运行库未就绪，处理功能暂不可用",
     engineWarningAction: "去查看",

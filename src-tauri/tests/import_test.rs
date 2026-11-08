@@ -4,9 +4,9 @@ mod common;
 
 use std::path::Path;
 
-use pdf_zhizhuan_lib::pdf::images_to_pdf::{self, ImagesToPdfOptions};
-use pdf_zhizhuan_lib::pdf::noop_progress;
-use pdf_zhizhuan_lib::pdf::types::{ImageFitMode, OrientationOpt, PageSizeOpt};
+use pdfai_cn_lib::pdf::images_to_pdf::{self, ImagesToPdfOptions};
+use pdfai_cn_lib::pdf::noop_progress;
+use pdfai_cn_lib::pdf::types::{ImageFitMode, OrientationOpt, PageSizeOpt};
 
 use common::{image_size, make_pdf, page_count, page_geometry, test_ctx, write_jpeg, write_png};
 
@@ -136,7 +136,7 @@ fn rejects_non_image_sources() {
     assert!(
         matches!(
             result,
-            Err(pdf_zhizhuan_lib::error::AppError::Unsupported(_))
+            Err(pdfai_cn_lib::error::AppError::Unsupported(_))
         ),
         "非图片输入应报 Unsupported，实际为 {result:?}"
     );
@@ -152,7 +152,7 @@ fn rejects_empty_source_list() {
     let result = images_to_pdf::run(&ctx, dir, &ImagesToPdfOptions::default(), &mut progress);
     assert!(matches!(
         result,
-        Err(pdf_zhizhuan_lib::error::AppError::InvalidParams(_))
+        Err(pdfai_cn_lib::error::AppError::InvalidParams(_))
     ));
 }
 
@@ -175,13 +175,13 @@ fn generated_pdf_can_be_rendered_back_to_image() {
         },
     );
 
-    let exported = pdf_zhizhuan_lib::pdf::export_images::run(
+    let exported = pdfai_cn_lib::pdf::export_images::run(
         &test_ctx(&dir.join("cache")),
         &dir.join("out"),
-        &pdf_zhizhuan_lib::pdf::export_images::ExportImagesOptions {
+        &pdfai_cn_lib::pdf::export_images::ExportImagesOptions {
             source: output.clone(),
             dpi: 150,
-            format: pdf_zhizhuan_lib::pdf::ImageFormatOpt::Png,
+            format: pdfai_cn_lib::pdf::ImageFormatOpt::Png,
             ..Default::default()
         },
         &mut noop_progress(),

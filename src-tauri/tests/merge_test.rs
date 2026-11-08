@@ -2,10 +2,10 @@
 
 mod common;
 
-use pdf_zhizhuan_lib::error::AppError;
-use pdf_zhizhuan_lib::pdf::merge::{self, MergeOptions, MergeSource};
-use pdf_zhizhuan_lib::pdf::noop_progress;
-use pdf_zhizhuan_lib::pdf::types::{ImageFitMode, OrientationOpt, OutputFile, PageSizeOpt};
+use pdfai_cn_lib::error::AppError;
+use pdfai_cn_lib::pdf::merge::{self, MergeOptions, MergeSource};
+use pdfai_cn_lib::pdf::noop_progress;
+use pdfai_cn_lib::pdf::types::{ImageFitMode, OrientationOpt, OutputFile, PageSizeOpt};
 
 use common::{make_pdf, page_count, page_geometry, test_ctx, write_jpeg, write_png};
 

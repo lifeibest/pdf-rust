@@ -83,8 +83,6 @@ export default function ImagesToPdfPage({ feature }: FeaturePageProps): ReactEle
               ) : null}
             </div>
           </Section>
-
-          <Notice tone="info">{t("img2pdf.noPreview")}</Notice>
         </div>
 
         <aside className="flex min-w-0 flex-col gap-5">

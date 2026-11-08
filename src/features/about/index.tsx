@@ -1,12 +1,11 @@
 import {
+  BookOpen,
   Check,
   Copy,
-  ExternalLink,
   FolderSearch,
-  Github,
+  Globe,
   Heart,
   Loader2,
-  MessageSquare,
   RefreshCw,
 } from "lucide-react";
 import { useState, type ReactElement, type ReactNode } from "react";
@@ -20,15 +19,12 @@ import { shortenPath } from "@/lib/paths";
 import { reveal } from "@/lib/tauri";
 import { useApp } from "@/store/app";
 import { LICENSE_GROUPS, licensesByGroup } from "./licenses";
+// 公众号二维码图片（src/assets/gongzhonghao.jpg）。
+import wechatQrcode from "@/assets/gongzhonghao.jpg";
 
-/**
- * 外部链接。
- *
- * 本期不接 updater，「检查更新」直接跳到 Releases 页；发布前把仓库地址换成真实值。
- */
-const REPOSITORY_URL = "https://github.com/pdf-zhizhuan/pdf-zhizhuan";
-const RELEASES_URL = `${REPOSITORY_URL}/releases`;
-const FEEDBACK_URL = `${REPOSITORY_URL}/issues/new`;
+/** 官网与 API 文档链接。 */
+const WEBSITE_URL = "https://www.pdfai.cn";
+const API_DOCS_URL = "https://www.pdfai.cn/docs";
 
 /**
  * 关于页。
@@ -55,6 +51,15 @@ export default function AboutPage(): ReactElement {
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-semibold text-ink">{info?.name ?? t("app.name")}</h1>
           <p className="truncate text-xs text-ink-muted">{t("app.tagline")}</p>
+          {/* 官网 / API 文档直接放进头卡，不再单独开一个「链接」模块 */}
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            <LinkButton href={WEBSITE_URL} icon={<Globe size={15} />}>
+              {t("about.website")}
+            </LinkButton>
+            <LinkButton href={API_DOCS_URL} icon={<BookOpen size={15} />}>
+              {t("about.apiDocs")}
+            </LinkButton>
+          </div>
         </div>
         <span className="chip shrink-0">
           {t("about.version")} {info?.version ?? unknown}
@@ -65,7 +70,52 @@ export default function AboutPage(): ReactElement {
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-5">
-          <Section title={t("about.buildInfo")}>
+          <Section title={t("about.wechat")}>
+            <div className="flex flex-col items-center gap-2 py-1">
+              <img
+                src={wechatQrcode}
+                alt={t("about.wechatHint")}
+                className="h-40 w-40 rounded-xl border border-line bg-white object-contain p-2"
+              />
+              <span className="text-xs text-ink-muted">{t("about.wechatHint")}</span>
+            </div>
+          </Section>
+
+          <Section title={t("about.paths")}>
+            <dl className="flex flex-col gap-3">
+              <InfoRow
+                label={t("about.resourceDir")}
+                value={info?.resourceDir ?? unknown}
+                revealable={Boolean(info?.resourceDir)}
+              />
+              <InfoRow
+                label={t("about.cacheDir")}
+                value={info?.cacheDir ?? unknown}
+                revealable={Boolean(info?.cacheDir)}
+              />
+              <InfoRow
+                label={t("about.configDir")}
+                value={info?.configDir ?? unknown}
+                revealable={Boolean(info?.configDir)}
+              />
+              <InfoRow
+                label={t("about.defaultOutputDir")}
+                value={info?.defaultOutputDir ?? unknown}
+                revealable={Boolean(info?.defaultOutputDir)}
+              />
+            </dl>
+          </Section>
+
+          <Section title={t("about.privacy")}>
+            <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-muted">
+              <Heart size={14} className="mt-0.5 shrink-0 text-rose-400" />
+              {t("about.privacyText")}
+            </p>
+          </Section>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-5">
+          <Section title={t("about.buildInfo")} collapsible defaultOpen={false}>
             <dl className="flex flex-col gap-3">
               <InfoRow label={t("about.identifier")} value={info?.identifier ?? unknown} copyable />
               <InfoRow label={t("about.tauriVersion")} value={info?.tauriVersion ?? unknown} />
@@ -75,7 +125,43 @@ export default function AboutPage(): ReactElement {
           </Section>
 
           <Section
+            title={t("about.licenses")}
+            hint={t("about.licenseHint")}
+            collapsible
+            defaultOpen={false}
+          >
+            <div className="flex flex-col gap-4">
+              {LICENSE_GROUPS.map((group) => (
+                <div key={group.id} className="flex flex-col gap-1.5">
+                  <span className="label mb-0">{t(group.titleKey)}</span>
+                  <ul className="flex flex-col gap-1">
+                    {licensesByGroup(group.id).map((entry) => (
+                      <li key={entry.name} className="flex items-baseline gap-2 text-xs">
+                        <button
+                          type="button"
+                          className="shrink-0 text-brand-600 underline-offset-2 hover:underline dark:text-brand-400"
+                          onClick={() => void openUrl(entry.url)}
+                        >
+                          {entry.name}
+                        </button>
+                        <span className="shrink-0 font-mono text-[11px] text-ink-faint">
+                          {entry.version}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-right text-[11px] text-ink-muted">
+                          {entry.license}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section
             title={t("about.engine")}
+            collapsible
+            defaultOpen={false}
             action={
               <button
                 type="button"
@@ -128,83 +214,6 @@ export default function AboutPage(): ReactElement {
                   </p>
                 </div>
               ) : null}
-            </div>
-          </Section>
-
-          <Section title={t("about.paths")}>
-            <dl className="flex flex-col gap-3">
-              <InfoRow
-                label={t("about.resourceDir")}
-                value={info?.resourceDir ?? unknown}
-                revealable={Boolean(info?.resourceDir)}
-              />
-              <InfoRow
-                label={t("about.cacheDir")}
-                value={info?.cacheDir ?? unknown}
-                revealable={Boolean(info?.cacheDir)}
-              />
-              <InfoRow
-                label={t("about.configDir")}
-                value={info?.configDir ?? unknown}
-                revealable={Boolean(info?.configDir)}
-              />
-              <InfoRow
-                label={t("about.defaultOutputDir")}
-                value={info?.defaultOutputDir ?? unknown}
-                revealable={Boolean(info?.defaultOutputDir)}
-              />
-            </dl>
-          </Section>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-5">
-          <Section title={t("about.links")}>
-            <div className="flex flex-wrap gap-2">
-              <LinkButton href={REPOSITORY_URL} icon={<Github size={15} />}>
-                {t("about.repository")}
-              </LinkButton>
-              <LinkButton href={RELEASES_URL} icon={<ExternalLink size={15} />}>
-                {t("about.releases")}
-              </LinkButton>
-              <LinkButton href={FEEDBACK_URL} icon={<MessageSquare size={15} />}>
-                {t("about.feedback")}
-              </LinkButton>
-            </div>
-          </Section>
-
-          <Section title={t("about.privacy")}>
-            <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-muted">
-              <Heart size={14} className="mt-0.5 shrink-0 text-rose-400" />
-              {t("about.privacyText")}
-            </p>
-          </Section>
-
-          <Section title={t("about.licenses")} hint={t("about.licenseHint")}>
-            <div className="flex flex-col gap-4">
-              {LICENSE_GROUPS.map((group) => (
-                <div key={group.id} className="flex flex-col gap-1.5">
-                  <span className="label mb-0">{t(group.titleKey)}</span>
-                  <ul className="flex flex-col gap-1">
-                    {licensesByGroup(group.id).map((entry) => (
-                      <li key={entry.name} className="flex items-baseline gap-2 text-xs">
-                        <button
-                          type="button"
-                          className="shrink-0 text-brand-600 underline-offset-2 hover:underline dark:text-brand-400"
-                          onClick={() => void openUrl(entry.url)}
-                        >
-                          {entry.name}
-                        </button>
-                        <span className="shrink-0 font-mono text-[11px] text-ink-faint">
-                          {entry.version}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-right text-[11px] text-ink-muted">
-                          {entry.license}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
             </div>
           </Section>
         </div>

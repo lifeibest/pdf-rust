@@ -2672,7 +2672,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pdf-zhizhuan"
+name = "pdfai-cn"
 version = "0.1.0"
 dependencies = [
  "anyhow",

@@ -4,10 +4,10 @@ mod common;
 
 use std::path::Path;
 
-use pdf_zhizhuan_lib::error::AppError;
-use pdf_zhizhuan_lib::pdf::export_images::{self, ExportImagesOptions};
-use pdf_zhizhuan_lib::pdf::noop_progress;
-use pdf_zhizhuan_lib::pdf::types::{ImageFormatOpt, OutputFile, PageScope, PageSizeOpt};
+use pdfai_cn_lib::error::AppError;
+use pdfai_cn_lib::pdf::export_images::{self, ExportImagesOptions};
+use pdfai_cn_lib::pdf::noop_progress;
+use pdfai_cn_lib::pdf::types::{ImageFormatOpt, OutputFile, PageScope, PageSizeOpt};
 
 use common::{image_size, list_files, make_pdf, test_ctx};
 
@@ -42,10 +42,10 @@ fn exports_selected_pages_at_requested_dpi() {
     assert_eq!(
         list_files(&dir.join("out"), "png"),
         vec![
-            "doc_p001.png",
-            "doc_p003.png",
-            "doc_p004.png",
-            "doc_p005.png"
+            "doc_p001_pdfai.cn.png",
+            "doc_p003_pdfai.cn.png",
+            "doc_p004_pdfai.cn.png",
+            "doc_p005_pdfai.cn.png"
         ],
         "文件名应当带三位页码，便于按名排序"
     );
@@ -189,7 +189,7 @@ fn zip_packs_all_images_into_single_archive() {
     assert_eq!(outputs[0].name, "pages.zip");
     assert!(matches!(
         outputs[0].kind,
-        pdf_zhizhuan_lib::pdf::OutputKind::Archive
+        pdfai_cn_lib::pdf::OutputKind::Archive
     ));
     // 打包模式下不应在输出目录里散落图片
     assert!(list_files(&dir.join("out"), "png").is_empty());
@@ -222,7 +222,7 @@ fn keyword_scopes_are_supported() {
             .iter()
             .map(|output| output.name.clone())
             .collect::<Vec<_>>(),
-        vec!["doc_p002.png", "doc_p004.png"]
+        vec!["doc_p002_pdfai.cn.png", "doc_p004_pdfai.cn.png"]
     );
 }
 

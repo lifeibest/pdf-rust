@@ -4,7 +4,7 @@ import type { TranslationShape } from "./zh-CN";
 const enUS: TranslationShape = {
   app: {
     name: "PDF Zhizhuan",
-    tagline: "An offline PDF toolbox — nothing ever leaves your Mac",
+    tagline: "Private and fully offline — the PDF converter you can trust with your files.",
   },
 
   nav: {
@@ -130,8 +130,6 @@ const enUS: TranslationShape = {
 
   img2pdf: {
     summary: "{{count}} image(s)",
-    noPreview:
-      "Source images are not previewed (the asset protocol is scoped to the cache folder); output follows the list order",
     fitHint: "“Fit” keeps the whole image but may add margins; “Fill” covers the page but crops",
   },
 
@@ -312,10 +310,10 @@ const enUS: TranslationShape = {
     licenseGroupEngine: "PDF engine",
     licenseGroupBackend: "Rust backend",
     licenseGroupFrontend: "Frontend",
-    links: "Links",
-    repository: "Repository",
-    releases: "Check for updates",
-    feedback: "Report an issue",
+    website: "Website",
+    apiDocs: "API docs",
+    wechat: "WeChat Official Account",
+    wechatHint: "Scan to follow our WeChat Official Account",
     privacy: "Privacy",
     privacyText:
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
@@ -323,7 +321,7 @@ const enUS: TranslationShape = {
 
   home: {
     greeting: "Pick a tool to get started",
-    subtitle: "Everything runs on this machine — your files never leave it",
+    subtitle: "Fully offline — no network, no uploads. Your files never leave this machine.",
     quickStart: "Tools",
     engineWarning: "PDFium runtime is missing, processing is unavailable",
     engineWarningAction: "Details",

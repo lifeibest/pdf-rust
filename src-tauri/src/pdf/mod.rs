@@ -143,24 +143,36 @@ pub fn file_stem(path: &Path) -> String {
         })
 }
 
-/// 在输出目录下解析最终写入路径：名称为空时使用 `fallback`，
+/// 品牌后缀：未自定义名称的默认产出，在扩展名前插入 `_pdfai.cn`，
+/// 如 `doc_merged.pdf` → `doc_merged_pdfai.cn.pdf`，便于识别文件来源。
+const BRAND_SUFFIX: &str = "_pdfai.cn";
+
+/// 在扩展名前插入品牌后缀；没有扩展名时直接追加在末尾。
+fn with_brand_suffix(name: &str) -> String {
+    match name.rsplit_once('.') {
+        Some((stem, ext)) if !ext.is_empty() => format!("{stem}{BRAND_SUFFIX}.{ext}"),
+        _ => format!("{name}{BRAND_SUFFIX}"),
+    }
+}
+
+/// 在输出目录下解析最终写入路径：名称为空时使用 `fallback`（并加品牌后缀），
 /// 已存在同名文件时自动追加 `-1`、`-2` 后缀，避免静默覆盖用户文件。
 pub fn resolve_output_path(out_dir: &Path, name: Option<&str>, fallback: &str) -> PathBuf {
     let desired = name
         .map(str::trim)
         .filter(|n| !n.is_empty())
-        .unwrap_or(fallback);
-    let desired = sanitize_file_name(desired);
+        .map(sanitize_file_name)
+        .unwrap_or_else(|| sanitize_file_name(&with_brand_suffix(fallback)));
     let candidate = out_dir.join(&desired);
     ensure_unique_path(candidate)
 }
 
 /// 批量输出（拆分 / 导出图片）中单个文件的路径。
 ///
-/// 与 [`resolve_output_path`] 一样不覆盖已存在的文件，但名称由调用方按页序
-/// 生成（如 `doc_p001.png`），因此不需要 fallback 名称。
+/// 与 [`resolve_output_path`] 一样不覆盖已存在的文件；批量模式没有自定义名称，
+/// 名称由调用方按页序生成（如 `doc_p001.png`），因此统一加品牌后缀。
 pub fn resolve_batch_path(out_dir: &Path, name: &str) -> PathBuf {
-    ensure_unique_path(out_dir.join(sanitize_file_name(name)))
+    ensure_unique_path(out_dir.join(sanitize_file_name(&with_brand_suffix(name))))
 }
 
 /// 去除路径分隔符等危险字符，防止用户输入造成越界写入。

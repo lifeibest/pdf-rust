@@ -1,5 +1,5 @@
 [package]
-name = "pdf-zhizhuan"
+name = "pdfai-cn"
 version = "0.1.0"
 description = "PDF智转 - 基于 Tauri + Rust(PDFium) 的桌面 PDF 工具箱"
 authors = ["PDF智转"]
@@ -8,7 +8,7 @@ rust-version = "1.90"
 
 [lib]
 # `_lib` 后缀用于避免 bin 与 lib 同名冲突（详见 https://github.com/rust-lang/cargo/issues/8519）
-name = "pdf_zhizhuan_lib"
+name = "pdfai_cn_lib"
 crate-type = ["cdylib", "rlib"]
 
 [build-dependencies]
