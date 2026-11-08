@@ -2,11 +2,14 @@ import {
   BookOpen,
   Check,
   Copy,
+  Download,
   FolderSearch,
   Globe,
   Heart,
   Loader2,
   RefreshCw,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { useState, type ReactElement, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,6 +20,7 @@ import { Notice } from "@/components/Notice";
 import { Section } from "@/components/Section";
 import { shortenPath } from "@/lib/paths";
 import { reveal } from "@/lib/tauri";
+import { checkForUpdate, type UpdateCheckResult } from "@/lib/update";
 import { useApp } from "@/store/app";
 import { LICENSE_GROUPS, licensesByGroup } from "./licenses";
 // 公众号二维码图片（src/assets/gongzhonghao.jpg）。
@@ -26,6 +30,14 @@ import wechatQrcode from "@/assets/gongzhonghao.jpg";
 const WEBSITE_URL = "https://www.pdfai.cn";
 const API_DOCS_URL = "https://www.pdfai.cn/docs";
 
+/** 更新日志：日期语言中立，描述走 i18n；新版本往数组头部加。 */
+const CHANGELOG = [
+  { date: "2026.11", textKey: "about.cl202611" },
+] as const;
+
+/** 「检测更新」的交互状态。 */
+type UpdateStatus = "idle" | "checking" | "uptodate" | "available" | "error";
+
 /**
  * 关于页。
  *
@@ -34,7 +46,7 @@ const API_DOCS_URL = "https://www.pdfai.cn/docs";
  * 全部摊在这一页，用户不需要看日志也不需要重启。
  */
 export default function AboutPage(): ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const info = useApp((state) => state.info);
   const loading = useApp((state) => state.loading);
   const error = useApp((state) => state.error);
@@ -43,6 +55,23 @@ export default function AboutPage(): ReactElement {
 
   const pdfium = info?.pdfium ?? null;
   const unknown = t("common.unknown");
+
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
+  const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
+
+  // 隐私优先：只有用户主动点击才联网拉取更新清单，无任何自动/后台检测。
+  async function handleCheckUpdate(): Promise<void> {
+    if (!info) return;
+    setUpdateStatus("checking");
+    try {
+      const result = await checkForUpdate(info.version, info.os, i18n.language);
+      setUpdateResult(result);
+      setUpdateStatus(result.hasUpdate ? "available" : "uptodate");
+    } catch {
+      setUpdateResult(null);
+      setUpdateStatus("error");
+    }
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -61,12 +90,43 @@ export default function AboutPage(): ReactElement {
             </LinkButton>
           </div>
         </div>
-        <span className="chip shrink-0">
-          {t("about.version")} {info?.version ?? unknown}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span className="chip">
+            {t("about.version")} {info?.version ?? unknown}
+          </span>
+          <button
+            type="button"
+            className="btn-quiet h-7 px-2 py-0 text-xs"
+            disabled={updateStatus === "checking" || !info}
+            onClick={() => void handleCheckUpdate()}
+          >
+            {updateStatus === "checking" ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <RefreshCw size={13} />
+            )}
+            {t(updateStatus === "checking" ? "about.checkingUpdate" : "about.checkUpdate")}
+          </button>
+        </div>
       </header>
 
       {error ? <Notice tone="error">{error}</Notice> : null}
+
+      {updateStatus === "error" ? (
+        <Notice tone="error" onDismiss={() => setUpdateStatus("idle")}>
+          {t("about.updateCheckFailed")}
+        </Notice>
+      ) : null}
+
+      {updateStatus === "uptodate" ? (
+        <Notice tone="success" onDismiss={() => setUpdateStatus("idle")}>
+          {t("about.updateUpToDate")}
+        </Notice>
+      ) : null}
+
+      {updateStatus === "available" && updateResult ? (
+        <UpdateAvailableCard result={updateResult} onDismiss={() => setUpdateStatus("idle")} />
+      ) : null}
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-5">
@@ -115,6 +175,21 @@ export default function AboutPage(): ReactElement {
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
+          <Section title={t("about.changelog")} collapsible defaultOpen={false}>
+            <ul className="flex flex-col gap-3">
+              {CHANGELOG.map((entry) => (
+                <li key={entry.date} className="flex gap-3 text-xs">
+                  <span className="shrink-0 font-mono text-[11px] text-brand-600 dark:text-brand-400">
+                    {entry.date}
+                  </span>
+                  <span className="min-w-0 flex-1 leading-relaxed text-ink-muted">
+                    {t(entry.textKey)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Section>
+
           <Section title={t("about.buildInfo")} collapsible defaultOpen={false}>
             <dl className="flex flex-col gap-3">
               <InfoRow label={t("about.identifier")} value={info?.identifier ?? unknown} copyable />
@@ -295,5 +370,80 @@ function LinkButton({ href, icon, children }: LinkButtonProps): ReactElement {
       {icon}
       {children}
     </button>
+  );
+}
+
+interface UpdateAvailableCardProps {
+  result: UpdateCheckResult;
+  onDismiss: () => void;
+}
+
+/** 「发现新版本」卡片：版本跃迁 + 更新要点 + 下载/查看完整说明入口。 */
+function UpdateAvailableCard({ result, onDismiss }: UpdateAvailableCardProps): ReactElement {
+  const { t } = useTranslation();
+  const downloadUrl = result.download?.url;
+  const pageUrl = result.releasePageUrl;
+
+  return (
+    <div className="card flex flex-col gap-3 border-brand-400/40 p-4">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
+          <Sparkles size={17} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-ink">
+            {t("about.updateAvailable")}
+            {result.mandatory ? (
+              <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[11px] font-medium text-rose-500">
+                {t("about.updateMandatory")}
+              </span>
+            ) : null}
+          </p>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            {result.currentVersion} → {result.latestVersion}
+            {result.releaseDate
+              ? ` · ${t("about.updateReleaseDate", { date: result.releaseDate })}`
+              : ""}
+          </p>
+        </div>
+        {result.mandatory ? null : (
+          <button
+            type="button"
+            className="btn-quiet h-7 w-7 shrink-0 rounded-lg px-0 py-0"
+            onClick={onDismiss}
+            aria-label={t("common.close")}
+            title={t("common.close")}
+          >
+            <X size={15} />
+          </button>
+        )}
+      </div>
+
+      {result.notes.length > 0 ? (
+        <ul className="flex flex-col gap-1">
+          {result.notes.map((note) => (
+            <li key={note} className="flex gap-2 text-xs leading-relaxed text-ink-muted">
+              <span className="mt-1 shrink-0 text-brand-500">•</span>
+              <span className="min-w-0">{note}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        {downloadUrl ? (
+          <button type="button" className="btn-primary" onClick={() => void openUrl(downloadUrl)}>
+            <Download size={15} />
+            {t("about.updateDownload")}
+          </button>
+        ) : null}
+        {pageUrl ? (
+          <button type="button" className="btn-ghost" onClick={() => void openUrl(pageUrl)}>
+            <Globe size={15} />
+            {t("about.updateViewAll")}
+          </button>
+        ) : null}
+      </div>
+    </div>
   );
 }

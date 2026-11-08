@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Infinity as InfinityIcon, Laptop, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,13 @@ import { useTasks } from "@/store/tasks";
 
 /** 首页只展示最近若干条任务，完整记录在任务中心。 */
 const RECENT_LIMIT = 5;
+
+/** 顶部优势标签：突出本地、隐私、无大小限制三大卖点。 */
+const ADVANTAGES = [
+  { icon: ShieldCheck, labelKey: "home.advPrivacy" },
+  { icon: InfinityIcon, labelKey: "home.advUnlimited" },
+  { icon: Laptop, labelKey: "home.advLocal" },
+] as const;
 
 /**
  * 首页。
@@ -36,6 +43,14 @@ export default function HomePage(): ReactElement {
         <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight text-ink">{t("home.greeting")}</h1>
           <p className="mt-0.5 text-sm text-ink-muted">{t("home.subtitle")}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {ADVANTAGES.map((advantage) => (
+              <span key={advantage.labelKey} className="chip">
+                <advantage.icon size={13} className="text-brand-600" />
+                {t(advantage.labelKey)}
+              </span>
+            ))}
+          </div>
         </div>
       </header>
 
