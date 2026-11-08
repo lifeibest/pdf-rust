@@ -9,22 +9,25 @@ import { OptionsForm } from "@/components/OptionsForm";
 import { OutputPicker } from "@/components/OutputPicker";
 import { Section } from "@/components/Section";
 import { TaskProgress } from "@/components/TaskProgress";
+import { ThumbStrip } from "@/components/ThumbStrip";
 import type { FeaturePageProps } from "@/features/types";
 import { useFeatureController } from "@/hooks/useFeatureController";
+import { useFirstPageThumbs } from "@/hooks/useFirstPageThumbs";
 import { formatBytes } from "@/lib/format";
 
 /**
  * 图片转 PDF 页。
  *
- * 与通用页的差别在于「没有预览」：asset 协议的 scope 只覆盖缓存目录，
- * 用户任意位置的图片无法直接放进 `<img>`，因此这里明确说明顺序即列表顺序，
- * 并给出排版方式的解释，避免用户对 `fit` / `fill` 的差别产生误解。
+ * 相比通用页多出一块「排版预览」：后端把用户图片解码缩略后写入缓存目录，
+ * 前端经 asset 协议加载，因此任意位置的图片也能预览（缩略图顺序即列表顺序）。
+ * 另给出排版方式的解释，避免用户对 `fit` / `fill` 的差别产生误解。
  */
 export default function ImagesToPdfPage({ feature }: FeaturePageProps): ReactElement {
   const { t } = useTranslation();
   const controller = useFeatureController(feature);
   const { source, output, runner, values, setValue, resetValues } = controller;
 
+  const thumbs = useFirstPageThumbs(source.files, source.files.length > 0);
   const bytes = source.files.reduce((sum, file) => sum + file.size, 0);
 
   return (
@@ -83,6 +86,12 @@ export default function ImagesToPdfPage({ feature }: FeaturePageProps): ReactEle
               ) : null}
             </div>
           </Section>
+
+          {source.files.length > 0 ? (
+            <Section title={t("img2pdf.preview")} hint={t("img2pdf.previewHint")}>
+              <ThumbStrip files={source.files} urls={thumbs.urls} />
+            </Section>
+          ) : null}
         </div>
 
         <aside className="flex min-w-0 flex-col gap-5">

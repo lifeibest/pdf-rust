@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { FileText, Layers, RotateCcw, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,11 +9,11 @@ import { OptionsForm } from "@/components/OptionsForm";
 import { OutputPicker } from "@/components/OutputPicker";
 import { Section } from "@/components/Section";
 import { TaskProgress } from "@/components/TaskProgress";
+import { ThumbStrip } from "@/components/ThumbStrip";
 import type { FeaturePageProps, SourceFile } from "@/features/types";
 import { useFeatureController } from "@/hooks/useFeatureController";
 import { useFirstPageThumbs } from "@/hooks/useFirstPageThumbs";
 import { formatBytes } from "@/lib/format";
-import { extname } from "@/lib/paths";
 
 /**
  * PDF 合并页。
@@ -152,54 +151,4 @@ function summarize(files: SourceFile[]): { pages: number; size: string } {
   const pages = files.reduce((sum, file) => sum + (file.doc?.pageCount ?? 0), 0);
   const bytes = files.reduce((sum, file) => sum + file.size, 0);
   return { pages, size: formatBytes(bytes) };
-}
-
-interface ThumbStripProps {
-  files: SourceFile[];
-  /** key 为 `SourceFile.id`；图片没有缩略图，因此不会出现在这里 */
-  urls: Record<string, string>;
-}
-
-/** 横向滚动的首页缩略图条，顺序与来源列表一致。 */
-function ThumbStrip({ files, urls }: ThumbStripProps): ReactElement {
-  const { t } = useTranslation();
-
-  return (
-    <ol className="mt-3 flex gap-2 overflow-x-auto pb-1">
-      {files.map((file, index) => {
-        const url = urls[file.id];
-        const isPdf = extname(file.path) === "pdf";
-        return (
-          <li
-            key={file.id}
-            className="flex w-24 shrink-0 flex-col gap-1"
-            title={`${index + 1}. ${file.name}`}
-          >
-            <span className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-line bg-surface-subtle">
-              {url ? (
-                <img
-                  src={url}
-                  alt={file.name}
-                  loading="lazy"
-                  draggable={false}
-                  className="max-h-full max-w-full object-contain"
-                />
-              ) : (
-                // 图片不能走 asset 协议预览（作用域只到缓存目录），退化为扩展名占位
-                <span className="text-[11px] font-medium uppercase text-ink-faint">
-                  {extname(file.path) || t("common.unknown")}
-                </span>
-              )}
-              <span className="absolute left-1 top-1 rounded-md bg-black/45 px-1 text-[10px] font-medium text-white">
-                {index + 1}
-              </span>
-            </span>
-            <span className={clsx("truncate text-[11px]", isPdf ? "text-ink-muted" : "text-sky-600 dark:text-sky-400")}>
-              {file.name}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
-  );
 }

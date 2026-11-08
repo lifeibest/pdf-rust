@@ -12,6 +12,7 @@ use serde::Serialize;
 
 use crate::error::AppError;
 use crate::pdf::engine;
+use crate::pdf::imaging;
 use crate::pdf::info::rotation_degrees;
 
 /// 单页缩略图的产出信息。
@@ -118,6 +119,46 @@ pub fn render_thumbs(
     }
 
     Ok(results)
+}
+
+/// 渲染图片缩略图：解码 → 等比缩小到长边不超过 `max_px` → 写 PNG 到缓存目录。
+///
+/// 与 PDF 缩略图共用 `cache_dir_for` / `read_cached`，因此同样享受磁盘缓存与「清理缓存」。
+/// 返回单元素 `Vec`，形状与 `render_thumbs` 一致，前端无需区分来源。
+/// 注：`image` 0.25 不按 EXIF 自动旋转，手机竖拍照片可能侧躺，属已知取舍。
+pub fn render_image_thumb(
+    source: &Path,
+    max_px: u32,
+    cache_root: &Path,
+) -> Result<Vec<ThumbOut>, AppError> {
+    let max_px = max_px.clamp(32, 2048);
+    let dir = cache_dir_for(cache_root, source, max_px);
+    std::fs::create_dir_all(&dir)?;
+
+    let out_path = dir.join("p0.png");
+    if let Some((width, height)) = read_cached(&out_path) {
+        return Ok(vec![ThumbOut {
+            page: 0,
+            path: out_path,
+            width,
+            height,
+            rotation_deg: 0,
+        }]);
+    }
+
+    // thumbnail() 等比缩放并适配到 max_px × max_px 内，使用快速采样，适合预览
+    let image = imaging::load_image(source)?;
+    let thumb = image.thumbnail(max_px, max_px);
+    let (width, height) = (thumb.width(), thumb.height());
+    thumb.save_with_format(&out_path, image::ImageFormat::Png)?;
+
+    Ok(vec![ThumbOut {
+        page: 0,
+        path: out_path,
+        width,
+        height,
+        rotation_deg: 0,
+    }])
 }
 
 /// 计入 `/Rotate` 后的有效宽高。

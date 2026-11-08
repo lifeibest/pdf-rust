@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 use crate::error::AppError;
+use crate::pdf::imaging;
 use crate::pdf::info::{self, DocInfo};
 use crate::pdf::thumbnails::{self, ThumbOut};
 
@@ -31,6 +32,8 @@ pub async fn probe_document(
 
 /// 渲染缩略图，返回写入磁盘的 PNG 路径。
 ///
+/// PDF 走 pdfium 逐页渲染；图片走 `render_image_thumb`（解码 + 等比缩小）。
+/// 两者形状一致，前端同一个命令即可处理两类来源。
 /// 前端拿到路径后通过 `convertFileSrc()` 经 asset 协议加载，
 /// 因此 `tauri.conf.json` 中必须开启 `assetProtocol` 且 scope 覆盖 `$APPCACHE/**`。
 #[tauri::command]
@@ -47,7 +50,11 @@ pub async fn render_thumbnails(
     let max_px = max_px.unwrap_or(DEFAULT_THUMB_PX);
 
     tauri::async_runtime::spawn_blocking(move || {
-        thumbnails::render_thumbs(&source, password.as_deref(), &pages, max_px, &cache_dir)
+        if imaging::is_image(&source) {
+            thumbnails::render_image_thumb(&source, max_px, &cache_dir)
+        } else {
+            thumbnails::render_thumbs(&source, password.as_deref(), &pages, max_px, &cache_dir)
+        }
     })
     .await
     .map_err(|_| AppError::Internal("缩略图渲染线程异常退出".to_string()))?

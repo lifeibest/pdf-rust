@@ -6,18 +6,32 @@ import { useSettings } from "@/store/settings";
 import type { SourceFile } from "@/features/types";
 
 export interface FirstPageThumbs {
-  /** key 为 `SourceFile.id`，value 为首页缩略图的 asset URL */
+  /** key 为 `SourceFile.id`，value 为预览缩略图的 asset URL（PDF 首页 / 图片缩略） */
   urls: Record<string, string>;
   loading: boolean;
 }
 
 const EMPTY: FirstPageThumbs = { urls: {}, loading: false };
 
+/** 可预览的扩展名：PDF 首页 + 各类图片，与后端 IMAGE_EXTENSIONS 保持一致。 */
+const PREVIEWABLE = new Set([
+  "pdf",
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+  "bmp",
+  "gif",
+  "tif",
+  "tiff",
+]);
+
 /**
- * 批量渲染多份文档的首页缩略图。
+ * 批量渲染多份来源的预览缩略图。
  *
  * 合并功能用它做「顺序预览条」：一眼看清排在前面的会是哪几页。
- * 只请求第 0 页，后端有磁盘缓存，因此来回切换页面几乎不产生开销。
+ * PDF 取首页、图片取整图缩略，后端同一个命令分派且都有磁盘缓存，
+ * 因此来回切换页面几乎不产生开销。
  */
 export function useFirstPageThumbs(
   files: SourceFile[],
@@ -29,7 +43,7 @@ export function useFirstPageThumbs(
   // 只把「id + 路径 + 密码」作为依赖签名：文件顺序变化不应触发重新渲染
   const targets = enabled
     ? files
-        .filter((file) => extname(file.path) === "pdf")
+        .filter((file) => PREVIEWABLE.has(extname(file.path)))
         .map((file) => ({ id: file.id, path: file.path, password: file.password ?? null }))
     : [];
   const signature = JSON.stringify(targets.map((item) => [item.id, item.path, item.password]));

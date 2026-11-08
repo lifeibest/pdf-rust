@@ -130,6 +130,8 @@ const zhCN = {
   img2pdf: {
     summary: "{{count}} 张图片",
     fitHint: "「完整放入」保留整张图但可能留白，「铺满」填满页面但会裁切",
+    preview: "排版预览",
+    previewHint: "缩略图顺序即输出顺序，可拖拽上方列表调整",
   },
 
   rotate: {
@@ -315,6 +317,7 @@ const zhCN = {
     privacy: "隐私说明",
     privacyText: "所有 PDF 处理都在本机完成，应用不会上传任何文件，也不联网校验授权。",
     changelog: "更新日志",
+    cl20261108: "图片转 PDF 增加图片预览功能",
     cl202611: "发布隐私版本，彻底重构，告别云端",
     checkUpdate: "检测更新",
     checkingUpdate: "检测中…",

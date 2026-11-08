@@ -131,6 +131,8 @@ const enUS: TranslationShape = {
   img2pdf: {
     summary: "{{count}} image(s)",
     fitHint: "“Fit” keeps the whole image but may add margins; “Fill” covers the page but crops",
+    preview: "Layout preview",
+    previewHint: "Thumbnail order matches output order — drag the list above to reorder",
   },
 
   rotate: {
@@ -318,6 +320,7 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
     changelog: "Changelog",
+    cl20261108: "Images to PDF: added image preview",
     cl202611: "Privacy-first release — fully re-architected, no more cloud",
     checkUpdate: "Check for updates",
     checkingUpdate: "Checking…",
