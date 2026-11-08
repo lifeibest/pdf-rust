@@ -54,18 +54,7 @@ export default function HomePage(): ReactElement {
         </div>
       </header>
 
-      {!engineReady ? (
-        <Notice
-          tone="warn"
-          action={
-            <Link to="/about" className="font-medium underline underline-offset-2">
-              {t("home.engineWarningAction")}
-            </Link>
-          }
-        >
-          {t("home.engineWarning")}
-        </Notice>
-      ) : null}
+      {!engineReady ? <Notice tone="warn">{t("home.engineWarning")}</Notice> : null}
 
       <div className="flex flex-col gap-6">
         {CATEGORIES.map((category) => {

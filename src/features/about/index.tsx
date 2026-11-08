@@ -17,7 +17,6 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { AppIcon } from "@/components/AppIcon";
 import { Notice } from "@/components/Notice";
 import { Section } from "@/components/Section";
-import { shortenPath } from "@/lib/paths";
 import { checkForUpdate, type UpdateCheckResult } from "@/lib/update";
 import { useApp } from "@/store/app";
 import { LICENSE_GROUPS, licensesByGroup } from "./licenses";
@@ -40,19 +39,14 @@ type UpdateStatus = "idle" | "checking" | "uptodate" | "available" | "error";
 /**
  * 关于页。
  *
- * 除了常规的版号与许可清单，这里承担一个实际职责：PDFium 是运行时动态加载的，
- * 缺失时应用其余部分仍可用，因此把「搜索过哪些路径、怎么补上、补完点重新检测」
- * 全部摊在这一页，用户不需要看日志也不需要重启。
+ * 展示版号、构建信息、更新日志、开源许可与隐私说明，并提供手动「检测更新」。
+ * PDFium 已随安装包内嵌，正常无需用户干预，故不再在此页暴露引擎诊断入口。
  */
 export default function AboutPage(): ReactElement {
   const { t, i18n } = useTranslation();
   const info = useApp((state) => state.info);
-  const loading = useApp((state) => state.loading);
   const error = useApp((state) => state.error);
-  const engineReady = useApp((state) => state.engineReady);
-  const recheckEngine = useApp((state) => state.recheckEngine);
 
-  const pdfium = info?.pdfium ?? null;
   const unknown = t("common.unknown");
 
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
@@ -207,64 +201,6 @@ export default function AboutPage(): ReactElement {
             </div>
           </Section>
 
-          <Section
-            title={t("about.engine")}
-            collapsible
-            defaultOpen={false}
-            action={
-              <button
-                type="button"
-                className="btn-quiet h-7 px-2 py-0 text-xs"
-                disabled={loading}
-                onClick={() => void recheckEngine()}
-              >
-                {loading ? (
-                  <Loader2 size={13} className="animate-spin" />
-                ) : (
-                  <RefreshCw size={13} />
-                )}
-                {t("about.engineReload")}
-              </button>
-            }
-          >
-            <div className="flex flex-col gap-3">
-              <Notice tone={engineReady ? "success" : "error"}>
-                {t(engineReady ? "about.engineReady" : "about.engineMissing")}
-              </Notice>
-
-              <dl className="flex flex-col gap-3">
-                <InfoRow label={t("about.engineTag")} value={pdfium?.expectedTag ?? unknown} />
-                <InfoRow label={t("about.engineSource")} value={pdfium?.source ?? unknown} />
-                <InfoRow
-                  label={t("about.enginePath")}
-                  value={pdfium?.libraryPath ?? unknown}
-                  copyable={Boolean(pdfium?.libraryPath)}
-                />
-              </dl>
-
-              {pdfium?.error ? <Notice tone="warn">{pdfium.error}</Notice> : null}
-
-              {pdfium && pdfium.searched.length > 0 ? (
-                <div className="flex flex-col gap-1.5">
-                  <span className="label mb-0">{t("about.engineSearched")}</span>
-                  <ul className="flex flex-col gap-1">
-                    {pdfium.searched.map((path) => (
-                      <li
-                        key={path}
-                        className="truncate rounded-lg bg-surface-subtle px-2 py-1 font-mono text-[11px] text-ink-muted"
-                        title={path}
-                      >
-                        {shortenPath(path, 48)}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-[11px] leading-relaxed text-ink-faint">
-                    {t("about.engineHint")}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          </Section>
         </div>
       </div>
     </div>
