@@ -302,11 +302,6 @@ const enUS: TranslationShape = {
     engineSearched: "Searched paths",
     engineHint:
       "Drop libpdfium.dylib into any path above, then click “Re-detect” — no restart needed.",
-    paths: "Folders",
-    resourceDir: "Resources",
-    cacheDir: "Cache",
-    configDir: "Config",
-    defaultOutputDir: "Default output folder",
     licenses: "Open-source licenses",
     licenseHint: "Built on the following projects, with thanks.",
     licenseGroupEngine: "PDF engine",

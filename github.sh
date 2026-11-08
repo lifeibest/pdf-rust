@@ -103,7 +103,7 @@ git tag -a "$TAG" -m "$TAG 发布"
 git push github "$TAG"
 
 echo ""
-echo "🎉 已发布 $TAG，GitHub Actions 构建已触发（约 13 分钟）："
+echo "🎉 已发布 ${TAG}，GitHub Actions 构建已触发（约 13 分钟）："
 echo "   构建进度：https://github.com/lifeibest/pdf-rust/actions"
 echo "   Release 草稿：https://github.com/lifeibest/pdf-rust/releases"
 echo "   构建完成后到 Releases 页面检查并发布草稿。"

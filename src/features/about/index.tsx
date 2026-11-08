@@ -3,7 +3,6 @@ import {
   Check,
   Copy,
   Download,
-  FolderSearch,
   Globe,
   Heart,
   Loader2,
@@ -19,7 +18,6 @@ import { AppIcon } from "@/components/AppIcon";
 import { Notice } from "@/components/Notice";
 import { Section } from "@/components/Section";
 import { shortenPath } from "@/lib/paths";
-import { reveal } from "@/lib/tauri";
 import { checkForUpdate, type UpdateCheckResult } from "@/lib/update";
 import { useApp } from "@/store/app";
 import { LICENSE_GROUPS, licensesByGroup } from "./licenses";
@@ -142,31 +140,6 @@ export default function AboutPage(): ReactElement {
             </div>
           </Section>
 
-          <Section title={t("about.paths")}>
-            <dl className="flex flex-col gap-3">
-              <InfoRow
-                label={t("about.resourceDir")}
-                value={info?.resourceDir ?? unknown}
-                revealable={Boolean(info?.resourceDir)}
-              />
-              <InfoRow
-                label={t("about.cacheDir")}
-                value={info?.cacheDir ?? unknown}
-                revealable={Boolean(info?.cacheDir)}
-              />
-              <InfoRow
-                label={t("about.configDir")}
-                value={info?.configDir ?? unknown}
-                revealable={Boolean(info?.configDir)}
-              />
-              <InfoRow
-                label={t("about.defaultOutputDir")}
-                value={info?.defaultOutputDir ?? unknown}
-                revealable={Boolean(info?.defaultOutputDir)}
-              />
-            </dl>
-          </Section>
-
           <Section title={t("about.privacy")}>
             <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-muted">
               <Heart size={14} className="mt-0.5 shrink-0 text-rose-400" />
@@ -179,7 +152,7 @@ export default function AboutPage(): ReactElement {
           <Section title={t("about.changelog")} collapsible defaultOpen={false}>
             <ul className="flex flex-col gap-3">
               {CHANGELOG.map((entry) => (
-                <li key={entry.date} className="flex gap-3 text-xs">
+                <li key={entry.date} className="flex items-baseline gap-3 text-xs">
                   <span className="shrink-0 font-mono text-[11px] text-brand-600 dark:text-brand-400">
                     {entry.date}
                   </span>
@@ -304,11 +277,10 @@ interface InfoRowProps {
   label: string;
   value: string;
   copyable?: boolean;
-  revealable?: boolean;
 }
 
 /** 「标签左、值右」的信息行，值过长时截断并把完整路径放进 title。 */
-function InfoRow({ label, value, copyable = false, revealable = false }: InfoRowProps) {
+function InfoRow({ label, value, copyable = false }: InfoRowProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -337,17 +309,6 @@ function InfoRow({ label, value, copyable = false, revealable = false }: InfoRow
           aria-label={t("common.copy")}
         >
           {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
-        </button>
-      ) : null}
-      {revealable ? (
-        <button
-          type="button"
-          className="btn-quiet h-7 w-7 shrink-0 rounded-lg px-0 py-0"
-          onClick={() => void reveal(value).catch(() => null)}
-          title={t("common.openDir")}
-          aria-label={t("common.openDir")}
-        >
-          <FolderSearch size={13} />
         </button>
       ) : null}
     </div>
