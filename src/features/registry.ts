@@ -10,6 +10,7 @@ import type { FeatureCategory, FeatureDefinition, SystemPageDefinition } from ".
 
 import activate from "./activate/meta";
 import img2pdf from "./img2pdf/meta";
+import invoice from "./invoice/meta";
 import merge from "./merge/meta";
 import pdf2img from "./pdf2img/meta";
 import rotate from "./rotate/meta";
@@ -20,6 +21,7 @@ import settings from "./settings/meta";
 /** 处理类功能。`order` 决定同分类内的先后。 */
 export const FEATURES: FeatureDefinition[] = [
   merge,
+  invoice,
   split,
   rotate,
   pdf2img,

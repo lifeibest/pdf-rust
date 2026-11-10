@@ -164,7 +164,8 @@ export type TaskRequest =
   | { kind: "split"; options: SplitOptions }
   | { kind: "rotate"; options: RotateOptions }
   | { kind: "pdf2img"; options: ExportImagesOptions }
-  | { kind: "img2pdf"; options: ImagesToPdfOptions };
+  | { kind: "img2pdf"; options: ImagesToPdfOptions }
+  | { kind: "invoice"; options: InvoiceMergeOptions };
 
 export interface MergeSource {
   path: string;
@@ -224,6 +225,19 @@ export interface ImagesToPdfOptions {
   imageFit: ImageFit;
   marginMm: number;
   imageDpi: number;
+  outputName: string | null;
+}
+
+/** 发票合并：把多张发票按 N-up 网格拼版到 A4。 */
+export interface InvoiceMergeOptions {
+  sources: MergeSource[];
+  /** 每张 A4 排布几张发票，支持 1 / 2 / 4 */
+  perSheet: number;
+  orientation: Orientation;
+  /** 每张发票四周留白（毫米），也充当相邻发票的裁切间隙 */
+  marginMm: number;
+  /** PDF 发票的渲染 DPI */
+  dpi: number;
   outputName: string | null;
 }
 

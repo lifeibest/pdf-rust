@@ -1,4 +1,4 @@
-//! 统一任务入口：五大功能的调度、进度事件、取消与任务中心。
+//! 统一任务入口：各功能的调度、进度事件、取消与任务中心。
 //!
 //! ★ 扩展点：新增一个功能只需要
 //! 1. 新建 `pdf/<op>.rs` 并实现 `run(ctx, out_dir, opts, progress)`；
@@ -18,6 +18,7 @@ use crate::error::AppError;
 use crate::events::{self, FailedPayload, FinishedPayload, ProgressPayload};
 use crate::pdf::export_images::{self, ExportImagesOptions};
 use crate::pdf::images_to_pdf::{self, ImagesToPdfOptions};
+use crate::pdf::invoice::{self, InvoiceMergeOptions};
 use crate::pdf::merge::{self, MergeOptions};
 use crate::pdf::rotate::{self, RotateOptions};
 use crate::pdf::split::{self, SplitOptions};
@@ -40,6 +41,8 @@ pub enum TaskRequest {
     ExportImages(ExportImagesOptions),
     #[serde(rename = "img2pdf")]
     ImagesToPdf(ImagesToPdfOptions),
+    #[serde(rename = "invoice")]
+    Invoice(InvoiceMergeOptions),
 }
 
 impl TaskRequest {
@@ -51,6 +54,7 @@ impl TaskRequest {
             TaskRequest::Rotate(_) => "rotate",
             TaskRequest::ExportImages(_) => "pdf2img",
             TaskRequest::ImagesToPdf(_) => "img2pdf",
+            TaskRequest::Invoice(_) => "invoice",
         }
     }
 
@@ -62,6 +66,7 @@ impl TaskRequest {
             TaskRequest::Rotate(_) => "PDF 旋转",
             TaskRequest::ExportImages(_) => "PDF 转图片",
             TaskRequest::ImagesToPdf(_) => "图片转 PDF",
+            TaskRequest::Invoice(_) => "发票合并",
         }
     }
 }
@@ -183,6 +188,7 @@ fn dispatch(
         TaskRequest::Rotate(opts) => rotate::run(ctx, out_dir, opts, progress),
         TaskRequest::ExportImages(opts) => export_images::run(ctx, out_dir, opts, progress),
         TaskRequest::ImagesToPdf(opts) => images_to_pdf::run(ctx, out_dir, opts, progress),
+        TaskRequest::Invoice(opts) => invoice::run(ctx, out_dir, opts, progress),
     }
 }
 
@@ -399,8 +405,12 @@ mod tests {
             TaskRequest::Rotate(RotateOptions::default()).feature_id(),
             TaskRequest::ExportImages(ExportImagesOptions::default()).feature_id(),
             TaskRequest::ImagesToPdf(ImagesToPdfOptions::default()).feature_id(),
+            TaskRequest::Invoice(InvoiceMergeOptions::default()).feature_id(),
         ];
-        assert_eq!(ids, ["merge", "split", "rotate", "pdf2img", "img2pdf"]);
+        assert_eq!(
+            ids,
+            ["merge", "split", "rotate", "pdf2img", "img2pdf", "invoice"]
+        );
     }
 
     #[test]

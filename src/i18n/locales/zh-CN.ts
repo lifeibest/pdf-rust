@@ -21,6 +21,10 @@ const zhCN = {
       title: "PDF 合并",
       desc: "把多个 PDF 与图片按顺序合并为一个文件",
     },
+    invoice: {
+      title: "发票合并",
+      desc: "把多张 A5 发票拼到一张 A4 上，方便打印",
+    },
     img2pdf: {
       title: "图片转 PDF",
       desc: "批量把图片排版为 PDF，可选纸张、边距与方向",
@@ -177,6 +181,8 @@ const zhCN = {
     extractSpec: "提取页码",
     extractSpecHint: "支持乱序，如 6,2,4 会按该顺序输出",
     groupSize: "每组页数",
+    perSheet: "每页发票数",
+    perSheetHint: "一张 A4 上排布几张发票",
     size: {
       a4: "A4",
       a3: "A3",
@@ -216,6 +222,11 @@ const zhCN = {
       "90": "顺时针 90°",
       "180": "旋转 180°",
       "270": "顺时针 270°（即逆时针 90°）",
+    },
+    perSheetValue: {
+      one: "1 张",
+      two: "2 张（推荐）",
+      four: "4 张",
     },
   },
 
@@ -307,6 +318,7 @@ const zhCN = {
     privacy: "隐私说明",
     privacyText: "所有 PDF 处理都在本机完成，应用不会上传任何文件，也不联网校验授权。",
     changelog: "更新日志",
+    cl20261111: "新增发票合并：把多张 A5 发票拼到一张 A4 上，方便打印",
     cl20261108: "图片转 PDF 增加图片预览功能",
     cl202611: "发布隐私版本，彻底重构，告别云端",
     checkUpdate: "检测更新",

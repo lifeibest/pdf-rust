@@ -1,7 +1,7 @@
 //! PDF 处理能力层。
 //!
 //! 约定：
-//! - 每个功能一个模块（`merge` / `split` / `rotate` / `export_images` / `images_to_pdf`），
+//! - 每个功能一个模块（`merge` / `split` / `rotate` / `export_images` / `images_to_pdf` / `invoice`），
 //!   对外暴露 `run(...)`，统一签名风格 `fn run(ctx, opts, progress) -> Result<Vec<OutputFile>, AppError>`。
 //! - 引擎只允许通过 [`engine::get()`] 获取，禁止各模块自行绑定 libpdfium。
 //! - 长循环必须调用 `ctx.check_cancel()?` 以支持取消。
@@ -13,6 +13,7 @@ pub mod export_images;
 pub mod images_to_pdf;
 pub mod imaging;
 pub mod info;
+pub mod invoice;
 pub mod merge;
 pub mod ranges;
 pub mod rotate;

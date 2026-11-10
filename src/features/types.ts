@@ -8,7 +8,7 @@ import { DEFAULT_SCOPE, type ScopeSelection } from "@/lib/pages";
  * 功能 id。必须与后端 `commands/tasks.rs` 中 `TaskRequest` 的 serde rename 一致，
  * 因为前端直接把 `feature.id` 当作 `kind` 发给 `run_task`，中间没有映射表。
  */
-export type FeatureId = "merge" | "split" | "rotate" | "pdf2img" | "img2pdf";
+export type FeatureId = "merge" | "split" | "rotate" | "pdf2img" | "img2pdf" | "invoice";
 
 /** 不属于处理功能的系统页面。 */
 export type SystemPageId = "activate" | "settings" | "about";

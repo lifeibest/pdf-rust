@@ -22,6 +22,10 @@ const enUS: TranslationShape = {
       title: "Merge PDF",
       desc: "Combine several PDFs and images into one file, in order",
     },
+    invoice: {
+      title: "Merge Invoices",
+      desc: "Tile several A5 invoices onto one A4 sheet for easy printing",
+    },
     img2pdf: {
       title: "Images to PDF",
       desc: "Lay out a batch of images into a PDF with paper, margin and orientation",
@@ -178,6 +182,8 @@ const enUS: TranslationShape = {
     extractSpec: "Pages to extract",
     extractSpecHint: "Order is preserved, e.g. 6,2,4",
     groupSize: "Pages per file",
+    perSheet: "Invoices per sheet",
+    perSheetHint: "How many invoices to tile on one A4 sheet",
     size: {
       a4: "A4",
       a3: "A3",
@@ -217,6 +223,11 @@ const enUS: TranslationShape = {
       "90": "90° clockwise",
       "180": "180°",
       "270": "270° clockwise (90° counter-clockwise)",
+    },
+    perSheetValue: {
+      one: "1 invoice",
+      two: "2 invoices (recommended)",
+      four: "4 invoices",
     },
   },
 
@@ -309,6 +320,7 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
     changelog: "Changelog",
+    cl20261111: "New feature: Merge Invoices — tile multiple A5 invoices onto one A4 sheet for printing",
     cl20261108: "Images to PDF: added image preview",
     cl202611: "Privacy-first release — fully re-architected, no more cloud",
     checkUpdate: "Check for updates",
