@@ -1,7 +1,7 @@
 {
   "name": "pdfai-cn",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "PDF智转 - Tauri + Rust 桌面端 PDF 工具箱",
   "scripts": {
