@@ -1,10 +1,13 @@
 import { Outlet } from "react-router-dom";
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 
 import { DropOverlay } from "@/components/DropOverlay";
 import { FeatureChooser } from "@/components/FeatureChooser";
+import { ActivationModal } from "@/components/ActivationModal";
 import { TaskDrawer } from "@/components/TaskDrawer";
 import { useDropFiles } from "@/hooks/useDropFiles";
+import { useQuota } from "@/store/quota";
+import { scheduleVipReport, startVipReportScheduler } from "@/lib/vipReport";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
@@ -17,6 +20,14 @@ import { TopBar } from "./TopBar";
 export default function AppLayout(): ReactElement {
   // 全局窗口拖拽：必须在 Router 内部（用到 navigate）
   useDropFiles();
+
+  // 启动即拉取一次授权状态，让侧边栏 / 顶栏重启后也能区分「获取激活码」与「VIP 会员」。
+  // 同时安装 VIP 静默上报调度并补报一次（best-effort，失败不影响任何功能）。
+  useEffect(() => {
+    void useQuota.getState().refresh();
+    startVipReportScheduler();
+    void scheduleVipReport();
+  }, []);
 
   return (
     <div className="flex h-full overflow-hidden bg-surface-muted">
@@ -34,6 +45,7 @@ export default function AppLayout(): ReactElement {
       <TaskDrawer />
       <DropOverlay />
       <FeatureChooser />
+      <ActivationModal />
     </div>
   );
 }

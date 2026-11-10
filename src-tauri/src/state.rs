@@ -233,6 +233,8 @@ pub fn error_kind(error: &AppError) -> String {
         AppError::Range(_) => "range",
         AppError::Unsupported(_) => "unsupported",
         AppError::Cancelled => "cancelled",
+        AppError::QuotaExceeded => "quotaExceeded",
+        AppError::LicenseInvalid(_) => "licenseInvalid",
         AppError::Internal(_) => "internal",
     }
     .to_string()

@@ -8,6 +8,7 @@
 
 import type { FeatureCategory, FeatureDefinition, SystemPageDefinition } from "./types";
 
+import activate from "./activate/meta";
 import img2pdf from "./img2pdf/meta";
 import merge from "./merge/meta";
 import pdf2img from "./pdf2img/meta";
@@ -25,8 +26,8 @@ export const FEATURES: FeatureDefinition[] = [
   img2pdf,
 ].sort((left, right) => left.order - right.order || left.id.localeCompare(right.id));
 
-/** 设置 / 关于，固定在侧边栏底部。 */
-export const SYSTEM_PAGES: SystemPageDefinition[] = [settings, about].sort(
+/** 获取激活码 / 设置 / 关于，固定在侧边栏底部。 */
+export const SYSTEM_PAGES: SystemPageDefinition[] = [activate, settings, about].sort(
   (left, right) => left.order - right.order,
 );
 

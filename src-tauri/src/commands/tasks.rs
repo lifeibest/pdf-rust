@@ -90,6 +90,10 @@ pub async fn run_task(
     password: Option<String>,
     notify: Option<bool>,
 ) -> Result<TaskRecord, AppError> {
+    // 配额门控：未激活每日免费 N 次，超额直接返回 QuotaExceeded（前端弹激活引导）。
+    // 放在创建任务记录之前，避免任务中心出现无意义的失败条目。
+    crate::commands::license::gate(&app)?;
+
     let feature = request.feature_id();
     let label = request.feature_label();
     let task_id = uuid::Uuid::new_v4().to_string();

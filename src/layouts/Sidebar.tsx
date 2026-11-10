@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Home } from "lucide-react";
+import { Crown, Home } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import type { ReactElement } from "react";
@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import { AppIcon } from "@/components/AppIcon";
 import { CATEGORIES, SYSTEM_PAGES, featuresByCategory } from "@/features/registry";
+import { useQuota } from "@/store/quota";
 
 /**
  * 左侧固定侧边栏。
@@ -16,6 +17,8 @@ import { CATEGORIES, SYSTEM_PAGES, featuresByCategory } from "@/features/registr
  */
 export function Sidebar(): ReactElement {
   const { t } = useTranslation();
+  // 已激活时，「获取激活码」入口改为展示「VIP 会员」。
+  const vip = useQuota((state) => state.license?.active ?? false);
 
   return (
     <nav className="flex h-full w-60 shrink-0 flex-col border-r border-line bg-surface">
@@ -53,9 +56,17 @@ export function Sidebar(): ReactElement {
       </div>
 
       <div className="shrink-0 border-t border-line px-3 py-3">
-        {SYSTEM_PAGES.map((page) => (
-          <SidebarLink key={page.id} to={page.route} icon={page.icon} label={t(page.titleKey)} />
-        ))}
+        {SYSTEM_PAGES.map((page) => {
+          const isVipEntry = page.id === "activate" && vip;
+          return (
+            <SidebarLink
+              key={page.id}
+              to={page.route}
+              icon={isVipEntry ? Crown : page.icon}
+              label={isVipEntry ? t("activate.navVip") : t(page.titleKey)}
+            />
+          );
+        })}
       </div>
     </nav>
   );

@@ -44,6 +44,14 @@ pub enum AppError {
     #[error("任务已取消")]
     Cancelled,
 
+    /// 未激活且今日免费次数已用完
+    #[error("今日免费次数已用完，激活后可不限次使用")]
+    QuotaExceeded,
+
+    /// 激活码校验失败（签名/过期/机器码不匹配等）
+    #[error("激活码无效：{0}")]
+    LicenseInvalid(String),
+
     #[error("内部错误：{0}")]
     Internal(String),
 }

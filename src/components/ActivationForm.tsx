@@ -1,0 +1,91 @@
+import { CheckCircle2, KeyRound, Loader2 } from "lucide-react";
+import { useState, type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
+
+import { Notice } from "@/components/Notice";
+import { useQuota } from "@/store/quota";
+
+interface ActivationFormProps {
+  /** 激活成功后的额外回调（如关闭弹窗） */
+  onActivated?: () => void;
+}
+
+/** 把 store 里的错误哨兵值/后端原文统一成可读文案。 */
+function errorText(error: string | null, t: (key: string) => string): string | null {
+  if (!error) return null;
+  if (error === "empty") return t("activate.errEmpty");
+  if (error === "licenseInvalid") return t("activate.errInvalid");
+  return error;
+}
+
+/**
+ * 激活码录入表单：输入 → 离线验签 → 落盘。
+ *
+ * 被「配额用尽弹窗」与「获取激活码页」共用，保证两处行为一致。
+ */
+export function ActivationForm({ onActivated }: ActivationFormProps): ReactElement {
+  const { t } = useTranslation();
+  const [code, setCode] = useState("");
+  const [done, setDone] = useState(false);
+
+  const loading = useQuota((state) => state.loading);
+  const error = useQuota((state) => state.error);
+  const activate = useQuota((state) => state.activate);
+
+  async function handleSubmit(): Promise<void> {
+    setDone(false);
+    const ok = await activate(code);
+    if (ok) {
+      setDone(true);
+      setCode("");
+      onActivated?.();
+    }
+  }
+
+  const message = errorText(error, t);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="label" htmlFor="activation-code">
+        {t("activate.codeLabel")}
+      </label>
+      <div className="flex gap-2">
+        <input
+          id="activation-code"
+          className="field min-w-0 flex-1 font-mono text-xs"
+          placeholder={t("activate.codePlaceholder")}
+          value={code}
+          spellCheck={false}
+          autoComplete="off"
+          onChange={(event) => {
+            setCode(event.target.value);
+            setDone(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !loading) void handleSubmit();
+          }}
+        />
+        <button
+          type="button"
+          className="btn-primary shrink-0"
+          disabled={loading || code.trim().length === 0}
+          onClick={() => void handleSubmit()}
+        >
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <KeyRound size={15} />}
+          {t("activate.activate")}
+        </button>
+      </div>
+
+      {done ? (
+        <Notice tone="success">
+          <span className="flex items-center gap-2">
+            <CheckCircle2 size={14} />
+            {t("activate.success")}
+          </span>
+        </Notice>
+      ) : null}
+
+      {message ? <Notice tone="error">{message}</Notice> : null}
+    </div>
+  );
+}

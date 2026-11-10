@@ -11,7 +11,7 @@ import { DEFAULT_SCOPE, type ScopeSelection } from "@/lib/pages";
 export type FeatureId = "merge" | "split" | "rotate" | "pdf2img" | "img2pdf";
 
 /** 不属于处理功能的系统页面。 */
-export type SystemPageId = "settings" | "about";
+export type SystemPageId = "activate" | "settings" | "about";
 
 export type PageId = FeatureId | SystemPageId | "home";
 

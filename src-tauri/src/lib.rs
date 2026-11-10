@@ -3,8 +3,10 @@
 mod commands;
 pub mod error;
 pub mod events;
+pub mod license;
 pub mod pdf;
 pub mod state;
+pub mod usage;
 
 use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
@@ -82,6 +84,12 @@ pub fn run() {
             commands::app::app_info,
             commands::app::pdfium_status,
             commands::app::reload_pdfium,
+            // 授权与配额
+            commands::license::license_status,
+            commands::license::activate_license,
+            commands::license::deactivate_license,
+            commands::license::quota_status,
+            commands::license::vip_report_payload,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -11,6 +11,7 @@ import {
   type TaskStatus,
 } from "@/lib/tauri";
 import { useTasks } from "@/store/tasks";
+import { useQuota } from "@/store/quota";
 import type { FeatureId } from "@/features/types";
 
 export type RunnerStatus = TaskStatus | "idle";
@@ -91,6 +92,10 @@ export function useTaskRunner(feature: FeatureId): TaskRunner {
         const normalized: AppError = isAppError(error)
           ? error
           : { kind: "internal", message: String(error) };
+        // 配额用尽不算普通失败：弹出全局激活引导，不落一条失败记录。
+        if (normalized.kind === "quotaExceeded") {
+          useQuota.getState().openModal();
+        }
         setLocalError(normalized);
         return null;
       } finally {

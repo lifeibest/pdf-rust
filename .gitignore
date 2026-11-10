@@ -26,6 +26,9 @@ dist-ssr
 # PDFium 动态库由 scripts/download-pdfium.mjs 按需下载，不入库
 src-tauri/binaries/
 
+# 激活码签发工具与 Ed25519 私钥：仅本地持有，严禁入库（仓库公开，私钥泄露即失效）
+tools/license/
+
 # 打包与临时产物
 src-tauri/target/
 src-tauri/gen/schemas

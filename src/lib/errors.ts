@@ -40,6 +40,11 @@ export function isEngineError(kind: ErrorKind | null | undefined): boolean {
   return kind === "pdfiumNotFound";
 }
 
+/** 配额用尽：界面应弹出激活引导，而不是当作普通失败。 */
+export function isQuotaError(kind: ErrorKind | null | undefined): boolean {
+  return kind === "quotaExceeded";
+}
+
 /**
  * 从任意抛出的值里取出可读文本。
  *

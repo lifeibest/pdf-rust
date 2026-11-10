@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { featureById, systemPageById } from "@/features/registry";
 import { useTasks } from "@/store/tasks";
+import { useQuota } from "@/store/quota";
 import type { Translate } from "@/i18n";
 
 /** 内容区顶栏：面包屑 + 任务中心入口。整条都可拖动窗口。 */
@@ -15,8 +16,9 @@ export function TopBar(): ReactElement {
   const running = useTasks((state) => state.tasks.filter((task) => task.status === "running").length);
   const drawerOpen = useTasks((state) => state.drawerOpen);
   const setDrawerOpen = useTasks((state) => state.setDrawerOpen);
+  const vip = useQuota((state) => state.license?.active ?? false);
 
-  const current = titleOf(location.pathname, t);
+  const current = titleOf(location.pathname, t, vip);
 
   return (
     <header
@@ -60,12 +62,15 @@ export function TopBar(): ReactElement {
 }
 
 /** 依据路径推导面包屑末级标题；首页返回空串（不显示第二级）。 */
-function titleOf(pathname: string, t: Translate): string {
+function titleOf(pathname: string, t: Translate, vip: boolean): string {
   const id = pathname.replace(/^\/+/, "").split("/")[0];
   if (!id) return "";
   const feature = featureById(id);
   if (feature) return t(feature.titleKey);
   const page = systemPageById(id);
-  if (page) return t(page.titleKey);
+  if (page) {
+    // 已激活时该页面包屑也同步为「VIP 会员」。
+    return page.id === "activate" && vip ? t("activate.navVip") : t(page.titleKey);
+  }
   return "";
 }

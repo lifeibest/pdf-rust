@@ -30,6 +30,8 @@ export type ErrorKind =
   | "range"
   | "unsupported"
   | "cancelled"
+  | "quotaExceeded"
+  | "licenseInvalid"
   | "internal";
 
 export interface AppError {
@@ -260,6 +262,46 @@ export interface AppInfo {
   imageExtensions: string[];
 }
 
+/* ------------------------------------------------------------ 授权配额 */
+
+/** 激活码授权状态，字段与 Rust `license::LicenseStatus` 对齐。 */
+export interface LicenseStatus {
+  active: boolean;
+  plan: string | null;
+  quotaUnlimited: boolean;
+  quotaPerDay: number | null;
+  exp: number | null;
+  licenseId: string | null;
+  /** token 绑定的机器码（未绑定为 null） */
+  machine: string | null;
+  /** 本机机器码，申请绑定码时提供给签发方 */
+  machineCode: string;
+  /** 未激活 / 校验失败原因 */
+  reason: string | null;
+}
+
+/** 今日配额快照，字段与 Rust `usage::QuotaStatus` 对齐。 */
+export interface QuotaStatus {
+  licensed: boolean;
+  unlimited: boolean;
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  allowed: boolean;
+  date: string;
+}
+
+/** VIP 静默上报 payload，字段与 Rust `commands::license::VipReportPayload` 对齐。 */
+export interface VipReportPayload {
+  codeHash: string;
+  deviceId: string;
+  deviceIdReliable: boolean;
+  plan: string;
+  os: string;
+  arch: string;
+  appVersion: string;
+}
+
 /* ------------------------------------------------------------------ 文件 */
 
 export interface PickFilesArgs {
@@ -369,6 +411,20 @@ export const appInfo = () => invoke<AppInfo>("app_info");
 export const pdfiumStatus = () => invoke<EngineStatus>("pdfium_status");
 
 export const reloadPdfium = () => invoke<EngineStatus>("reload_pdfium");
+
+/* -------------------------------------------------------------- 授权配额 */
+
+export const licenseStatus = () => invoke<LicenseStatus>("license_status");
+
+export const activateLicense = (code: string) =>
+  invoke<LicenseStatus>("activate_license", { code });
+
+export const deactivateLicense = () => invoke<LicenseStatus>("deactivate_license");
+
+export const quotaStatus = () => invoke<QuotaStatus>("quota_status");
+
+/** 生成静默上报 payload；未激活返回 null。纯本地计算，不联网。 */
+export const vipReportPayload = () => invoke<VipReportPayload | null>("vip_report_payload");
 
 /* -------------------------------------------------------------- 事件名 */
 
