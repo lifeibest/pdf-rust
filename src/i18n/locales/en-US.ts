@@ -347,6 +347,7 @@ const enUS: TranslationShape = {
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
     changelog: "Changelog",
     cl20261111: "Added the Merge Invoices feature",
+    cl20261110: "Added WeChat article to PDF export",
     cl20261108: "Images to PDF: added image preview",
     cl202611: "Privacy-first release — fully re-architected, no more cloud",
     checkUpdate: "Check for updates",
