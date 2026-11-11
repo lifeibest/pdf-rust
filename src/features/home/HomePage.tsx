@@ -1,4 +1,4 @@
-import { ArrowRight, Infinity as InfinityIcon, Laptop, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Crown, Infinity as InfinityIcon, Laptop, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { formatRelativeTime } from "@/lib/format";
 import { CATEGORIES, FEATURES, featuresByCategory, featureById } from "@/features/registry";
 import type { FeatureDefinition } from "@/features/types";
 import { useApp } from "@/store/app";
+import { useQuota } from "@/store/quota";
 import { useTasks } from "@/store/tasks";
 
 /** 首页只展示最近若干条任务，完整记录在任务中心。 */
@@ -31,6 +32,7 @@ const ADVANTAGES = [
 export default function HomePage(): ReactElement {
   const { t } = useTranslation();
   const engineReady = useApp((state) => state.engineReady);
+  const vip = useQuota((state) => state.license?.active ?? false);
   const tasks = useTasks((state) => state.tasks);
   const setDrawerOpen = useTasks((state) => state.setDrawerOpen);
 
@@ -44,6 +46,12 @@ export default function HomePage(): ReactElement {
           <h1 className="text-xl font-semibold tracking-tight text-ink">{t("home.greeting")}</h1>
           <p className="mt-0.5 text-sm text-ink-muted">{t("home.subtitle")}</p>
           <div className="mt-2 flex flex-wrap gap-2">
+            {vip ? (
+              <span className="chip border-amber-300/60 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                <Crown size={13} />
+                {t("activate.navVip")}
+              </span>
+            ) : null}
             {ADVANTAGES.map((advantage) => (
               <span key={advantage.labelKey} className="chip">
                 <advantage.icon size={13} className="text-brand-600" />
@@ -74,6 +82,26 @@ export default function HomePage(): ReactElement {
           );
         })}
       </div>
+
+      {!vip ? (
+        <Link
+          to="/activate"
+          className="card flex items-center gap-4 border-amber-300/60 bg-gradient-to-br from-amber-50 to-orange-50 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-amber-500/25 dark:from-amber-500/10 dark:to-orange-500/10"
+        >
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
+            <Crown size={20} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-ink">
+              {t("features.activate.title")}
+            </span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-ink-muted">
+              {t("features.activate.desc")}
+            </span>
+          </span>
+          <ArrowRight size={16} className="shrink-0 text-amber-600 dark:text-amber-400" />
+        </Link>
+      ) : null}
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center gap-2">

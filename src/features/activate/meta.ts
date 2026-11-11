@@ -9,7 +9,7 @@ const activate: SystemPageDefinition = {
   titleKey: "features.activate.title",
   descKey: "features.activate.desc",
   icon: KeyRound,
-  order: 15,
+  order: 5,
   Page: lazy(() => import("./index")),
 };
 

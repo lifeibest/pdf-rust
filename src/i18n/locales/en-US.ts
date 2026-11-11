@@ -366,6 +366,9 @@ const enUS: TranslationShape = {
     subtitle:
       "Without VIP you can process 10 times per day for free; activating removes the limit. Activation redeems online once; after that everything runs fully offline.",
     statusFree: "Not activated · {{limit}}/day",
+    promoBadge: "Limited offer",
+    promoTitle: "Get VIP for ¥9.9",
+    promoDesc: "Limited-time offer — follow the account to get VIP benefits.",
     navVip: "VIP",
     vipTitle: "VIP Member",
     vipSubtitle: "Activated — thank you for your support!",
@@ -396,7 +399,7 @@ const enUS: TranslationShape = {
     planFollow: "Follow",
     planPaid: "Paid",
     codeLabel: "Membership code",
-    codePlaceholder: "Paste your membership code, e.g. K7Q2-9F4M",
+    codePlaceholder: "Paste your membership code",
     activate: "Activate",
     success: "Activated — the daily limit has been lifted",
     errEmpty: "Enter your membership code first",

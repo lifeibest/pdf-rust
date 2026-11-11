@@ -1,4 +1,4 @@
-import { BadgeCheck, Crown, KeyRound, QrCode, RefreshCw } from "lucide-react";
+import { BadgeCheck, Crown, KeyRound, QrCode, RefreshCw, Sparkles } from "lucide-react";
 import { useEffect, useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -204,7 +204,15 @@ function FreeView(): ReactElement {
       </header>
 
       <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Section title={t("activate.howTitle")}>
+        <Section
+          title={t("activate.howTitle")}
+          action={
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/70 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+              <Sparkles size={12} />
+              {t("activate.promoBadge")} · {t("activate.promoTitle")}
+            </span>
+          }
+        >
           <div className="flex flex-col gap-4">
             <ol className="flex flex-col gap-2.5">
               {STEPS.map((key, index) => (
