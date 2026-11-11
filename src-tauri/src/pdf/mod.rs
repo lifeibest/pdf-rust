@@ -20,6 +20,7 @@ pub mod rotate;
 pub mod split;
 pub mod thumbnails;
 pub mod types;
+pub mod wechat;
 
 pub use types::{
     CancelToken, ImageFitMode, ImageFormatOpt, OrientationOpt, OutputFile, OutputKind, PageScope,

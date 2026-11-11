@@ -6,9 +6,11 @@
 //! - [`license`]：激活码校验/存取与配额门控
 //! - [`pdf`]：文档探测与缩略图
 //! - [`tasks`]：统一任务入口（进度事件、取消、任务中心）
+//! - [`wechat`]：微信公众号文章导出 PDF（专用命令，走内嵌 WebView 原生打印）
 
 pub mod app;
 pub mod fs;
 pub mod license;
 pub mod pdf;
 pub mod tasks;
+pub mod wechat;

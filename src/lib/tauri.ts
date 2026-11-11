@@ -241,6 +241,14 @@ export interface InvoiceMergeOptions {
   outputName: string | null;
 }
 
+/** 微信公众号文章导出选项，与 Rust `pdf::wechat::WechatExportOptions` 对齐。 */
+export interface WechatExportOptions {
+  url: string;
+  outputName: string | null;
+  /** 手动模式：显示文章窗口供用户完成验证 / 等待加载，确认后再导出 */
+  manual: boolean;
+}
+
 /* -------------------------------------------------------------- 应用信息 */
 
 export interface PdfiumManifest {
@@ -356,6 +364,31 @@ export const runTask = (
 
 export const cancelTask = (taskId: string) =>
   invoke<boolean>("cancel_task", { taskId });
+
+/**
+ * 导出微信公众号文章为 PDF。
+ *
+ * 与 `runTask` 不同，这是专用命令（内嵌 WebView 原生打印）；`taskId` 由前端生成并传入，
+ * 便于在返回之前即可通过 `cancelWechatExport` 取消。仍复用统一的任务事件与任务中心。
+ */
+export const exportWechatPdf = (
+  taskId: string,
+  options: WechatExportOptions,
+  outDir?: string | null,
+) =>
+  invoke<TaskRecord>("export_wechat_pdf", {
+    taskId,
+    options,
+    outDir: outDir ?? null,
+  });
+
+/** 取消正在运行的微信导出；后端随后会发 `task:failed(cancelled)` 事件。 */
+export const cancelWechatExport = (taskId: string) =>
+  invoke<boolean>("cancel_wechat_export", { taskId });
+
+/** 手动模式下确认「页面已就绪，继续导出」；后端等待循环随即进入打印。 */
+export const confirmWechatExport = (taskId: string) =>
+  invoke<boolean>("confirm_wechat_export", { taskId });
 
 export const listTasks = () => invoke<TaskRecord[]>("list_tasks");
 

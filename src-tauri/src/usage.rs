@@ -97,10 +97,10 @@ pub fn consume(config_dir: &Path, license: &LicenseStatus) -> Result<QuotaStatus
     let mut record = read_record(config_dir);
     let limit = daily_limit(license);
 
-    if let Some(limit) = limit {
-        if record.count >= limit {
-            return Err(AppError::QuotaExceeded);
-        }
+    if let Some(limit) = limit
+        && record.count >= limit
+    {
+        return Err(AppError::QuotaExceeded);
     }
 
     record.count += 1;

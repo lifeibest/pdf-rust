@@ -163,10 +163,10 @@ pub fn parse(code: &str) -> Result<LicensePayload, AppError> {
             return Err(AppError::LicenseInvalid("激活码已过期".to_string()));
         }
     }
-    if let Some(bound) = &payload.machine {
-        if !bound.eq_ignore_ascii_case(&machine_code()) {
-            return Err(AppError::LicenseInvalid("激活码与本机不匹配".to_string()));
-        }
+    if let Some(bound) = &payload.machine
+        && !bound.eq_ignore_ascii_case(&machine_code())
+    {
+        return Err(AppError::LicenseInvalid("激活码与本机不匹配".to_string()));
     }
 
     Ok(payload)

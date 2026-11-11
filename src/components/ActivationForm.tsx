@@ -57,7 +57,7 @@ export function ActivationForm({ onActivated }: ActivationFormProps): ReactEleme
       <div className="flex gap-2">
         <input
           id="activation-code"
-          className="field min-w-0 flex-1 font-mono text-xs"
+          className="field min-w-0 flex-1 border-brand-300/70 bg-brand-500/[0.06] font-mono text-xs shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:border-brand-500/40 dark:bg-brand-500/10"
           placeholder={t("activate.codePlaceholder")}
           value={code}
           spellCheck={false}

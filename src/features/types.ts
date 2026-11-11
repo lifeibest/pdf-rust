@@ -8,7 +8,14 @@ import { DEFAULT_SCOPE, type ScopeSelection } from "@/lib/pages";
  * 功能 id。必须与后端 `commands/tasks.rs` 中 `TaskRequest` 的 serde rename 一致，
  * 因为前端直接把 `feature.id` 当作 `kind` 发给 `run_task`，中间没有映射表。
  */
-export type FeatureId = "merge" | "split" | "rotate" | "pdf2img" | "img2pdf" | "invoice";
+export type FeatureId =
+  | "merge"
+  | "split"
+  | "rotate"
+  | "pdf2img"
+  | "img2pdf"
+  | "invoice"
+  | "wechat";
 
 /** 不属于处理功能的系统页面。 */
 export type SystemPageId = "activate" | "settings" | "about";
@@ -167,6 +174,13 @@ export interface FeatureDefinition {
 
   /** 是否需要输出目录（所有产出文件的功能都为 true） */
   needsOutputDir: boolean;
+  /**
+   * 运行管线：
+   * - `"task"`（默认）：经 `GenericFeaturePage` / `useFeatureController` 走统一 `run_task`；
+   * - `"custom"`：自带页面直接调用专用命令（如微信导出走 `export_wechat_pdf`），
+   *   不进入 task 管线，此时 `buildRequest` 可缺省。
+   */
+  mode?: "task" | "custom";
   /** 是否显示拖拽排序（多来源功能） */
   sortEnabled: boolean;
   /** 是否加载页面缩略图 */
@@ -179,8 +193,10 @@ export interface FeatureDefinition {
    *
    * 有了它，`GenericFeaturePage` 才能真正跑通任意功能，
    * 后续新增简单功能只写 `meta.ts` 即可，零页面代码。
+   *
+   * `mode: "custom"` 的功能不经 task 管线，可省略本字段。
    */
-  buildRequest(
+  buildRequest?(
     files: SourceFile[],
     values: OptionValues,
     context: BuildContext,

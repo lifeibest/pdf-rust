@@ -99,6 +99,8 @@ export function useFeatureController(feature: FeatureDefinition): FeatureControl
   const run = useCallback(
     async (overrides: RunOverrides = {}) => {
       if (!canRun) return;
+      // custom 模式功能不经 task 管线，也没有 buildRequest，此处直接拒绝
+      if (!feature.buildRequest) return;
 
       const needsDir = overrides.needsDir ?? feature.needsOutputDir;
       const dir = needsDir ? await output.resolve() : null;

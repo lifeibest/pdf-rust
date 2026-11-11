@@ -140,6 +140,24 @@ Page: lazy(() => import("./index")),
 - 前端：`pnpm typecheck`；手动跑一遍 README 的验收清单对应条目。
 - 文案：切到英文确认没有漏翻（硬编码中文在 review 时会被打回）。
 
+## 7. 例外：不走 `run_task` 管线的 custom 模式功能
+
+上面的流程假设功能是「文件进 → PDFium 处理 → 文件出」，可套用 `TaskRequest` 与
+`GenericFeatureController`。个别功能不满足这个形状，例如**微信文章转 PDF**
+（`features/wechat`）：来源是 URL 而非文件，且打印必须由内嵌 WebView 在 UI 线程发起
+（`with_webview`），无法塞进 `spawn_blocking` 的纯 Rust 管线。
+
+这类功能改走「专用命令 + `mode: "custom"` 页面」：
+
+- 后端：`pdf/wechat.rs`（编排）+ `pdf/wechat/{mac,win}.rs`（平台原生打印，unsafe 隔离在此），
+  `commands/wechat.rs` 提供 `export_wechat_pdf` / `cancel_wechat_export` 两个命令，在 `lib.rs` 注册；
+  仍复用 `AppState` 的任务登记与取消令牌、`events::*` 事件，因此任务中心 / 进度 / 取消行为一致。
+- 前端：`types.ts` 的 `FeatureDefinition` 支持 `mode?: "task" | "custom"` 与可选 `buildRequest`；
+  custom 功能省略 `buildRequest`、自带 `Page`，直接调用 `tauri.ts` 里的 `exportWechatPdf`。
+  隐藏窗口 `wechat-export-*` **不加入任何 capability 的 `windows` 列表**，远程页零 IPC 权限。
+
+新写 custom 模式功能时参考 `features/wechat/{meta.ts,index.tsx}` 与 `commands/wechat.rs`。
+
 ## 检查清单
 
 - [ ] `src-tauri/src/pdf/watermark.rs` + `mod.rs` 导出

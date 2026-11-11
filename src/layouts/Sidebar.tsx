@@ -60,13 +60,14 @@ export function Sidebar(): ReactElement {
 
       <div className="shrink-0 border-t border-line px-3 py-3">
         {SYSTEM_PAGES.map((page) => {
-          const isVipEntry = page.id === "activate" && vip;
+          const isVipPage = page.id === "activate";
           return (
             <SidebarLink
               key={page.id}
               to={page.route}
-              icon={isVipEntry ? Crown : page.icon}
-              label={isVipEntry ? t("activate.navVip") : t(page.titleKey)}
+              icon={isVipPage && vip ? Crown : page.icon}
+              label={isVipPage && vip ? t("activate.navVip") : t(page.titleKey)}
+              vip={isVipPage}
             />
           );
         })}
@@ -81,10 +82,19 @@ interface SidebarLinkProps {
   label: string;
   /** 功能项的渐变色，选中时用于图标底色 */
   accent?: string;
+  /** VIP / 获取会员入口：用金色与普通中性字色区分，凸显会员属性 */
+  vip?: boolean;
   end?: boolean;
 }
 
-function SidebarLink({ to, icon: Icon, label, accent, end = false }: SidebarLinkProps): ReactElement {
+function SidebarLink({
+  to,
+  icon: Icon,
+  label,
+  accent,
+  vip = false,
+  end = false,
+}: SidebarLinkProps): ReactElement {
   return (
     <NavLink
       to={to}
@@ -92,9 +102,14 @@ function SidebarLink({ to, icon: Icon, label, accent, end = false }: SidebarLink
       className={({ isActive }) =>
         clsx(
           "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm transition-colors",
-          isActive
-            ? "bg-surface-subtle font-medium text-ink"
-            : "text-ink-muted hover:bg-surface-subtle/60 hover:text-ink",
+          vip
+            ? clsx(
+                "font-medium text-amber-600 hover:bg-amber-500/10 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300",
+                isActive && "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+              )
+            : isActive
+              ? "bg-surface-subtle font-medium text-ink"
+              : "text-ink-muted hover:bg-surface-subtle/60 hover:text-ink",
         )
       }
     >
@@ -103,9 +118,11 @@ function SidebarLink({ to, icon: Icon, label, accent, end = false }: SidebarLink
           <span
             className={clsx(
               "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",
-              isActive && accent
-                ? `bg-gradient-to-br text-white ${accent}`
-                : "text-ink-faint group-hover:text-ink-muted",
+              vip
+                ? "bg-amber-500/15 text-amber-600 group-hover:text-amber-700 dark:bg-amber-400/15 dark:text-amber-400"
+                : isActive && accent
+                  ? `bg-gradient-to-br text-white ${accent}`
+                  : "text-ink-faint group-hover:text-ink-muted",
             )}
           >
             <Icon size={15} />

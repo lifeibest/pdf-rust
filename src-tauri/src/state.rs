@@ -4,7 +4,9 @@
 //! 命令通过 `State<'_, AppState>` 或 `app.state::<AppState>()` 访问。
 
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use serde::Serialize;
 
@@ -13,6 +15,10 @@ use crate::pdf::{CancelToken, OutputFile};
 
 /// 任务中心保留的历史记录上限，超出后按开始时间淘汰最旧的条目。
 const MAX_TASK_RECORDS: usize = 50;
+
+/// 手动模式下的「用户已确认继续导出」信号，由 `confirm_wechat_export` 置位、
+/// 后台线程轮询。与 [`CancelToken`] 同为 `Arc<AtomicBool>`。
+pub type ConfirmFlag = Arc<AtomicBool>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -72,6 +78,7 @@ impl TaskRecord {
 pub struct AppState {
     tasks: Mutex<HashMap<String, TaskRecord>>,
     cancels: Mutex<HashMap<String, CancelToken>>,
+    confirms: Mutex<HashMap<String, ConfirmFlag>>,
 }
 
 impl AppState {
@@ -86,7 +93,27 @@ impl AppState {
             .lock()
             .expect("cancels 锁中毒")
             .insert(id.to_string(), token.clone());
+        self.confirms
+            .lock()
+            .expect("confirms 锁中毒")
+            .insert(id.to_string(), Arc::new(AtomicBool::new(false)));
         token
+    }
+
+    /// 取某任务的手动确认信号（供后台线程轮询）；任务不存在时返回 `None`。
+    pub fn confirm_flag(&self, id: &str) -> Option<ConfirmFlag> {
+        self.confirms.lock().expect("confirms 锁中毒").get(id).cloned()
+    }
+
+    /// 置位「继续导出」信号；任务不存在或已结束时返回 false。
+    pub fn confirm_task(&self, id: &str) -> bool {
+        match self.confirms.lock().expect("confirms 锁中毒").get(id) {
+            Some(flag) => {
+                flag.store(true, Ordering::SeqCst);
+                true
+            }
+            None => false,
+        }
     }
 
     /// 更新进度；任务不存在时静默忽略（可能已被清理）。
@@ -147,6 +174,7 @@ impl AppState {
 
         // 取消令牌在任务结束后不再有用，及时释放
         self.cancels.lock().expect("cancels 锁中毒").remove(id);
+        self.confirms.lock().expect("confirms 锁中毒").remove(id);
         Some(snapshot)
     }
 
@@ -196,6 +224,8 @@ impl AppState {
 
         let mut cancels = self.cancels.lock().expect("cancels 锁中毒");
         cancels.retain(|id, _| running.contains(id));
+        let mut confirms = self.confirms.lock().expect("confirms 锁中毒");
+        confirms.retain(|id, _| running.contains(id));
         removed
     }
 
@@ -216,6 +246,7 @@ impl AppState {
         for (id, _) in finished.into_iter().take(excess) {
             tasks.remove(&id);
             self.cancels.lock().expect("cancels 锁中毒").remove(&id);
+            self.confirms.lock().expect("confirms 锁中毒").remove(&id);
         }
     }
 }

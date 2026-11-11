@@ -67,6 +67,10 @@ pub fn run() {
             commands::tasks::list_tasks,
             commands::tasks::clear_tasks,
             commands::tasks::clear_temp,
+            // 微信公众号文章导出
+            commands::wechat::export_wechat_pdf,
+            commands::wechat::cancel_wechat_export,
+            commands::wechat::confirm_wechat_export,
             // 文档与缩略图
             commands::pdf::probe_document,
             commands::pdf::render_thumbnails,

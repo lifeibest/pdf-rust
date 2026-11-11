@@ -56,6 +56,21 @@ pdfium-render = { version = "0.9.5", features = [
     "thread_safe",
 ] }
 
+# 微信公众号文章导出 PDF（方案 A）：用内嵌 WebView 加载文章后调平台原生「打印为 PDF」。
+# 版本必须与 tauri/wry 已解析到的传递依赖对齐，避免多版本冲突。
+# Windows：从 ICoreWebView2Controller 取 ICoreWebView2 → cast ICoreWebView2_7::PrintToPdf。
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+# PCWSTR / Result 等 COM 基础类型，版本须与 webview2-com 已解析到的对齐
+windows = "0.62"
+# macOS：从 PlatformWebview::inner() 的 WKWebView 指针调 createPDFWithConfiguration:completionHandler:。
+[target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSData", "NSError", "NSObject"] }
+objc2-core-foundation = "0.3"
+objc2-web-kit = { version = "0.3", features = ["WKWebView", "WKPDFConfiguration", "objc2-core-foundation", "block2"] }
+
 [dev-dependencies]
 tempfile = "3"
 

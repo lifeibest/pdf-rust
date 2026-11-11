@@ -15,6 +15,7 @@ import merge from "./merge/meta";
 import pdf2img from "./pdf2img/meta";
 import rotate from "./rotate/meta";
 import split from "./split/meta";
+import wechat from "./wechat/meta";
 import about from "./about/meta";
 import settings from "./settings/meta";
 
@@ -26,6 +27,7 @@ export const FEATURES: FeatureDefinition[] = [
   rotate,
   pdf2img,
   img2pdf,
+  wechat,
 ].sort((left, right) => left.order - right.order || left.id.localeCompare(right.id));
 
 /** 获取激活码 / 设置 / 关于，固定在侧边栏底部。 */
