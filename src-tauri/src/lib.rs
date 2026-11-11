@@ -89,7 +89,7 @@ pub fn run() {
             commands::license::activate_license,
             commands::license::deactivate_license,
             commands::license::quota_status,
-            commands::license::vip_report_payload,
+            commands::license::device_fingerprint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

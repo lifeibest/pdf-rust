@@ -305,12 +305,10 @@ export interface QuotaStatus {
   date: string;
 }
 
-/** VIP 静默上报 payload，字段与 Rust `commands::license::VipReportPayload` 对齐。 */
-export interface VipReportPayload {
-  codeHash: string;
+/** 设备指纹，字段与 Rust `commands::license::DeviceFingerprint` 对齐；兑换激活码时随请求上报。 */
+export interface DeviceFingerprint {
   deviceId: string;
   deviceIdReliable: boolean;
-  plan: string;
   os: string;
   arch: string;
   appVersion: string;
@@ -437,8 +435,8 @@ export const deactivateLicense = () => invoke<LicenseStatus>("deactivate_license
 
 export const quotaStatus = () => invoke<QuotaStatus>("quota_status");
 
-/** 生成静默上报 payload；未激活返回 null。纯本地计算，不联网。 */
-export const vipReportPayload = () => invoke<VipReportPayload | null>("vip_report_payload");
+/** 生成本机设备指纹；激活时联网兑换随请求带上，供后端登记设备数并校验授权台数。纯本地计算，不联网。 */
+export const deviceFingerprint = () => invoke<DeviceFingerprint>("device_fingerprint");
 
 /* -------------------------------------------------------------- 事件名 */
 

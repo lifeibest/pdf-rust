@@ -337,7 +337,7 @@ const enUS: TranslationShape = {
   activate: {
     title: "Get VIP",
     subtitle:
-      "Without VIP you can process 10 times per day for free; activating removes the limit. Verification is fully offline.",
+      "Without VIP you can process 10 times per day for free; activating removes the limit. Activation redeems online once; after that everything runs fully offline.",
     statusFree: "Not activated · {{limit}}/day",
     navVip: "VIP",
     vipTitle: "VIP Member",
@@ -345,7 +345,7 @@ const enUS: TranslationShape = {
     howTitle: "How to get VIP",
     step1: "Scan the QR code below with WeChat and follow the “PDF Zhizhuan” account.",
     step2: "Pay as instructed in the account, or reply with the keyword VIP to get the purchase link.",
-    step3: "After payment you'll receive a license key — paste it here to activate.",
+    step3: "After payment you'll receive an 8-character key — paste it here to activate.",
     qrHint: "Scan with WeChat to follow the account and get VIP",
     quotaTitle: "Today's usage",
     quotaUsed: "Used",
@@ -369,11 +369,14 @@ const enUS: TranslationShape = {
     planFollow: "Follow",
     planPaid: "Paid",
     codeLabel: "License key",
-    codePlaceholder: "Paste the license key you received",
+    codePlaceholder: "Paste your key, e.g. K7Q2-9F4M",
     activate: "Activate",
     success: "Activated — the daily limit has been lifted",
     errEmpty: "Enter a license key first",
     errInvalid: "The license key is invalid or expired. Please check and try again.",
+    errRedeemNotFound: "License key not found or no longer valid. Please check and try again.",
+    errRedeemNetwork: "Activation needs a one-time online redemption. Check your connection and try again.",
+    errOverLimit: "This key is already active on {{devices}} devices, exceeding the {{cap}}-device limit, so it can't be activated on this machine.",
     modalTitle: "You've used up today's free runs",
     modalDesc:
       "Activate to keep going with no limit. Everything still runs locally, with no network.",

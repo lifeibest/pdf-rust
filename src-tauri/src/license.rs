@@ -5,6 +5,10 @@
 //!
 //! 客户端只内嵌 Ed25519 **公钥**做离线验签，私钥绝不出现在安装包内；
 //! 因此校验全程不联网，符合「隐私优先、本地运行」的定位。
+//!
+//! 短码方案：发给用户的是 8 位短码，前端激活时先经后端 `/v1/license/redeem` 一次性联网
+//! 换回完整签名 token（见 `src/lib/licenseRedeem.ts`），再调用本模块离线验签保存；
+//! 因此 `parse`/`activate_license` 收到的始终是完整 token，Rust 侧保持纯离线、无 HTTP 依赖。
 
 use std::path::{Path, PathBuf};
 use std::process::Command;

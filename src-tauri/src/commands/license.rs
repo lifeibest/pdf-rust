@@ -59,26 +59,11 @@ pub fn gate(app: &AppHandle) -> Result<(), AppError> {
     Ok(())
 }
 
-/* ------------------------------------------------------------ VIP 静默上报 */
+/* ---------------------------------------------------------------- 设备指纹 */
 
-/// 上报哈希的固定盐：仅让 codeHash/deviceId 不可反推原始值，不参与验签。
+/// 上报哈希的固定盐：仅让 deviceId 不可反推机器码原文，不参与验签。
+/// 必须与后端 `vip_service.REPORT_HASH_SALT` 一致，才能与 VIP 账本的设备去重口径对齐。
 const REPORT_HASH_SALT: &str = "pdfai-vip-report-v1";
-
-/// 静默上报的 payload：只含哈希与设备元信息，不含激活码/机器码原文。
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct VipReportPayload {
-    pub code_hash: String,
-    pub device_id: String,
-    /// 机器码是否为真实硬件标识；false 时后端不计槽位。
-    pub device_id_reliable: bool,
-    pub plan: String,
-    /// 签发时 `--act` 定的设备上限；null 时由后端套用默认值（如 3）。
-    pub max_devices: Option<u32>,
-    pub os: &'static str,
-    pub arch: &'static str,
-    pub app_version: &'static str,
-}
 
 fn sha256_hex(input: &str) -> String {
     let mut hasher = Sha256::new();
@@ -86,24 +71,28 @@ fn sha256_hex(input: &str) -> String {
     hasher.finalize().iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
-/// 生成静默上报 payload；未激活时返回 null（前端据此跳过上报）。
-///
-/// 纯本地计算、不联网；联网发送由前端 best-effort 完成，失败不影响任何功能。
+/// 兑换激活码时随请求上报的设备指纹：只含机器码哈希与设备元信息，不含机器码/激活码原文。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceFingerprint {
+    pub device_id: String,
+    /// 机器码是否为真实硬件标识；false（退化为 OS-ARCH-LOCAL）时后端不计入授权台数。
+    pub device_id_reliable: bool,
+    pub os: &'static str,
+    pub arch: &'static str,
+    pub app_version: &'static str,
+}
+
+/// 生成本机设备指纹。纯本地计算、不依赖已保存的激活码；供激活时联网兑换随请求带上，
+/// 后端据此登记设备数并判定是否超过授权台数上限。
 #[tauri::command]
-pub fn vip_report_payload(app: AppHandle) -> Option<VipReportPayload> {
-    let dir = config_dir_or_empty(&app);
-    let code = license::load_code(&dir)?;
-    // parse 通过即视为有效授权（验签 + kid + 有效期 + 机器匹配全过）。
-    let parsed = license::parse(&code).ok()?;
+pub fn device_fingerprint() -> DeviceFingerprint {
     let machine = license::machine_code();
-    Some(VipReportPayload {
-        code_hash: sha256_hex(&format!("{REPORT_HASH_SALT}:{code}")),
+    DeviceFingerprint {
         device_id: sha256_hex(&format!("{REPORT_HASH_SALT}:{machine}")),
         device_id_reliable: license::machine_code_is_real(),
-        plan: parsed.plan.clone(),
-        max_devices: parsed.act,
         os: std::env::consts::OS,
         arch: std::env::consts::ARCH,
         app_version: env!("CARGO_PKG_VERSION"),
-    })
+    }
 }

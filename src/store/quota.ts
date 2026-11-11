@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 import { messageOf } from "@/lib/errors";
-import { scheduleVipReport } from "@/lib/vipReport";
+import { isFullToken, redeemShortCode } from "@/lib/licenseRedeem";
 import {
   activateLicense,
   deactivateLicense,
@@ -20,6 +20,8 @@ interface QuotaState {
   loading: boolean;
   /** 激活失败等原因 */
   error: string | null;
+  /** 超过授权台数时的设备计数（error==="overLimit" 时有效），供提示文案插值 */
+  overLimit: { devices: number; cap: number } | null;
   /** 拉取授权与配额快照 */
   refresh(): Promise<void>;
   openModal(): void;
@@ -30,10 +32,17 @@ interface QuotaState {
   deactivate(): Promise<void>;
 }
 
+/** 把离线验签等错误统一成 i18n 哨兵值，其余保留后端原文。 */
+function mapActivateError(error: unknown): string {
+  if (isAppError(error) && error.kind === "licenseInvalid") return "licenseInvalid";
+  return messageOf(error);
+}
+
 /**
  * 授权与配额的全局状态。
  *
- * 激活码校验在 Rust 侧离线完成，本 store 只负责快照缓存与「配额用尽 → 弹激活引导」
+ * 激活支持两种输入：8 位短码（先一次性联网兑换回签名 token）与完整签名 token（旧长码，直接离线验签）；
+ * 验签始终在 Rust 侧离线完成。本 store 只负责快照缓存与「配额用尽 → 弹激活引导」
  * 的全局联动，因此任何功能页触发超额都能统一弹出同一个引导弹窗。
  */
 export const useQuota = create<QuotaState>((set, get) => ({
@@ -42,12 +51,13 @@ export const useQuota = create<QuotaState>((set, get) => ({
   modalOpen: false,
   loading: false,
   error: null,
+  overLimit: null,
 
   async refresh() {
     set({ loading: true });
     try {
       const [license, quota] = await Promise.all([licenseStatus(), quotaStatus()]);
-      set({ license, quota, error: null });
+      set({ license, quota, error: null, overLimit: null });
     } catch (error) {
       set({ error: messageOf(error) });
     } finally {
@@ -61,28 +71,41 @@ export const useQuota = create<QuotaState>((set, get) => ({
   },
 
   closeModal() {
-    set({ modalOpen: false, error: null });
+    set({ modalOpen: false, error: null, overLimit: null });
   },
 
   async activate(code) {
     const trimmed = code.trim();
     if (trimmed.length === 0) {
-      set({ error: "empty" });
+      set({ error: "empty", overLimit: null });
       return false;
     }
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, overLimit: null });
     try {
-      const license = await activateLicense(trimmed);
+      let token = trimmed;
+      // 短码：先联网兑换（后端登记本机设备并做授权台数硬校验，超限则不返回 token）；
+      // 完整签名 token（旧长码）走纯离线验签。
+      if (!isFullToken(trimmed)) {
+        const outcome = await redeemShortCode(trimmed);
+        if (!outcome.ok) {
+          if (outcome.reason === "overLimit") {
+            set({
+              error: "overLimit",
+              overLimit: { devices: outcome.devices ?? 0, cap: outcome.cap ?? 0 },
+            });
+          } else {
+            set({ error: outcome.reason === "notFound" ? "redeemNotFound" : "redeemNetwork" });
+          }
+          return false;
+        }
+        token = outcome.token;
+      }
+      const license = await activateLicense(token);
       const quota = await quotaStatus();
-      set({ license, quota, modalOpen: false, error: null });
-      // 激活成功后静默上报（best-effort，失败不影响激活结果）。
-      void scheduleVipReport();
+      set({ license, quota, modalOpen: false, error: null, overLimit: null });
       return true;
     } catch (error) {
-      // 激活码类错误映射为 i18n 哨兵值，其余保留后端原文
-      const mapped =
-        isAppError(error) && error.kind === "licenseInvalid" ? "licenseInvalid" : messageOf(error);
-      set({ error: mapped });
+      set({ error: mapActivateError(error) });
       return false;
     } finally {
       set({ loading: false });
@@ -94,7 +117,7 @@ export const useQuota = create<QuotaState>((set, get) => ({
     try {
       const license = await deactivateLicense();
       const quota = await quotaStatus();
-      set({ license, quota, error: null });
+      set({ license, quota, error: null, overLimit: null });
     } catch (error) {
       set({ error: messageOf(error) });
     } finally {

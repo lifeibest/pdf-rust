@@ -7,7 +7,6 @@ import { ActivationModal } from "@/components/ActivationModal";
 import { TaskDrawer } from "@/components/TaskDrawer";
 import { useDropFiles } from "@/hooks/useDropFiles";
 import { useQuota } from "@/store/quota";
-import { scheduleVipReport, startVipReportScheduler } from "@/lib/vipReport";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
@@ -22,11 +21,9 @@ export default function AppLayout(): ReactElement {
   useDropFiles();
 
   // 启动即拉取一次授权状态，让侧边栏 / 顶栏重启后也能区分「获取激活码」与「VIP 会员」。
-  // 同时安装 VIP 静默上报调度并补报一次（best-effort，失败不影响任何功能）。
+  // （设备登记已合并到激活时的联网兑换，不再需要后台静默上报与周期补报。）
   useEffect(() => {
     void useQuota.getState().refresh();
-    startVipReportScheduler();
-    void scheduleVipReport();
   }, []);
 
   return (
