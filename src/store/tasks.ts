@@ -56,6 +56,7 @@ export const useTasks = create<TasksState>((set, get) => ({
         message: "",
         outputs: payload.outputs,
         elapsedMs: payload.elapsedMs,
+        summary: payload.summary,
         error: null,
         errorKind: null,
       }));
@@ -133,6 +134,7 @@ function upsertTask(
       errorKind: null,
       startedAt: Date.now(),
       elapsedMs: 0,
+      summary: null,
     };
     const created: TaskRecord = { ...skeleton, ...mutate(skeleton) };
 

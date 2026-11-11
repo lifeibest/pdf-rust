@@ -46,6 +46,14 @@ const enUS: TranslationShape = {
       title: "Rotate PDF",
       desc: "Rotate pages in bulk — all, odd/even, or a custom range",
     },
+    rmblank: {
+      title: "Remove Blank Pages",
+      desc: "Detect and delete blank pages by ink coverage — adjustable threshold, optional in-place overwrite",
+    },
+    compress: {
+      title: "Compress PDF",
+      desc: "Much smaller files — best for scans and image-heavy documents (text becomes unselectable)",
+    },
     wechat: {
       title: "WeChat Article to PDF",
       desc: "Paste a WeChat Official Account article link and export the whole page as a PDF",
@@ -160,6 +168,12 @@ const enUS: TranslationShape = {
     inPlaceWarning: "In-place mode overwrites the source file and cannot be undone",
   },
 
+  rmblank: {
+    preview: "Page preview",
+    previewHint: "Blank pages are detected by non-white pixel ratio — check against the thumbnails",
+    inPlaceWarning: "In-place mode overwrites the source file and cannot be undone",
+  },
+
   wechat: {
     article: "Article link",
     articleHint: "Only mp.weixin.qq.com Official Account articles are supported",
@@ -208,6 +222,15 @@ const enUS: TranslationShape = {
     degrees: "Rotation",
     inPlace: "Modify the source file",
     inPlaceHint: "Overwrites in place instead of writing a new file (cannot be undone)",
+    threshold: "Blank threshold",
+    thresholdHint: "Pages with less non-white ink than this are treated as blank; raise it to catch noisy scanned pages",
+    compressLevel: "Compression level",
+    compressLevelValue: { low: "Low", medium: "Medium", high: "High" },
+    compressLevelHint: {
+      low: "Keeps pages crisp — best for printing and archiving",
+      medium: "Recommended — balances clarity and size for everyday sharing",
+      high: "Smallest files — best for email attachments and uploads",
+    },
     splitMode: "Split mode",
     rangesSpec: "Ranges",
     rangesSpecHint: "Each comma-separated range becomes one file",
@@ -248,6 +271,7 @@ const enUS: TranslationShape = {
       px: "px",
       page: "pages",
       kb: "KB",
+      percent: "%",
     },
     splitValue: {
       every_n: "Every N pages",
@@ -356,6 +380,8 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
     changelog: "Changelog",
+    cl20261112c: "Added the Compress PDF feature",
+    cl20261112b: "Added the Remove Blank Pages feature",
     cl20261112: "Added the Extract PDF Images feature",
     cl20261111: "Added the Merge Invoices feature",
     cl20261110: "Added WeChat article to PDF export",

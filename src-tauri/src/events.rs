@@ -44,6 +44,8 @@ pub struct FinishedPayload {
     pub feature: String,
     pub outputs: Vec<crate::pdf::OutputFile>,
     pub elapsed_ms: u64,
+    /// 完成摘要（如压缩率），前端结果区常驻展示；无摘要时为 null
+    pub summary: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

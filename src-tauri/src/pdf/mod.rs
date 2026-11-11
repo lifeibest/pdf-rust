@@ -9,6 +9,7 @@
 //!
 //! 新增功能的步骤见 `docs/ADD-FEATURE.md`。
 
+pub mod compress;
 pub mod engine;
 pub mod export_images;
 pub mod extract_images;
@@ -18,6 +19,7 @@ pub mod info;
 pub mod invoice;
 pub mod merge;
 pub mod ranges;
+pub mod remove_blank;
 pub mod rotate;
 pub mod split;
 pub mod thumbnails;

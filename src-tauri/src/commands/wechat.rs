@@ -116,7 +116,7 @@ fn finalize(
     match outputs {
         Ok(files) => {
             let record = state
-                .finish_task(task_id, files.clone(), elapsed_ms)
+                .finish_task(task_id, files.clone(), elapsed_ms, None)
                 .ok_or_else(|| AppError::Internal("任务记录已丢失".to_string()))?;
 
             let _ = app.emit(
@@ -126,6 +126,7 @@ fn finalize(
                     feature: "wechat".to_string(),
                     outputs: files,
                     elapsed_ms,
+                    summary: None,
                 },
             );
 

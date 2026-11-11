@@ -225,6 +225,8 @@ pub struct TaskCtx {
     /// 加密文档的打开密码
     pub password: Option<String>,
     pub cancel: CancelToken,
+    /// 完成摘要：任务结束后在结果区常驻展示（如压缩率），由各模块选填
+    summary: std::cell::RefCell<Option<String>>,
 }
 
 impl TaskCtx {
@@ -233,7 +235,18 @@ impl TaskCtx {
             cache_dir,
             password,
             cancel,
+            summary: std::cell::RefCell::new(None),
         }
+    }
+
+    /// 写入完成摘要；随 `task:finished` 事件与任务记录下发前端。
+    pub fn set_summary(&self, message: impl Into<String>) {
+        *self.summary.borrow_mut() = Some(message.into());
+    }
+
+    /// 读取完成摘要；未写入时为 `None`。
+    pub fn summary(&self) -> Option<String> {
+        self.summary.borrow().clone()
     }
 
     /// 密码字符串引用，供 `Pdfium::load_pdf_from_file` 使用。

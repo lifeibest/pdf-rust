@@ -109,7 +109,7 @@
   .note.good { border-color: var(--emerald); background: rgba(16,185,129,.08); }
 
   .accent-merge { color:#a5b4fc; } .accent-split { color:#fcd34d; } .accent-rotate { color:#fda4af; }
-  .accent-pdf2img { color:#6ee7b7; } .accent-extractimg { color:#5eead4; } .accent-img2pdf { color:#7dd3fc; } .accent-invoice { color:#d8b4fe; }
+  .accent-pdf2img { color:#6ee7b7; } .accent-extractimg { color:#5eead4; } .accent-img2pdf { color:#7dd3fc; } .accent-invoice { color:#d8b4fe; } .accent-rmblank { color:#bef264; } .accent-compress { color:#67e8f9; }
 
   footer { padding: 34px 0 60px; color: var(--ink-faint); font-size: 13px; }
   .opt-item { display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-bottom:1px dashed var(--line); }
@@ -134,8 +134,8 @@
     <h1><span class="grad">PDF智转</span> 项目说明文档</h1>
     <p class="subtitle">
       一款隐私安全、全程不联网、完全在本机完成计算的 PDF 工具箱。所有 PDF 处理逻辑都在 Rust 侧执行，
-      以内嵌的 PDFium 作为唯一引擎，前端只负责界面与任务编排。支持合并、拆分、旋转、
-      PDF 转图片、PDF 提取图片、图片转 PDF、发票合并七大功能。
+      以内嵌的 PDFium 作为唯一引擎，前端只负责界面与任务编排。支持合并、拆分、旋转、删除空白页、PDF 压缩、
+      PDF 转图片、PDF 提取图片、图片转 PDF、发票合并九大功能。
     </p>
   </div>
 </header>
@@ -241,9 +241,9 @@
                │ invoke（命令）               │ emit（事件）
 ┌──────────────┴─────────────────────────────┴──────────────────────────┐
 │  commands/  tasks.rs（任务编排） pdf.rs / fs.rs / app.rs                │
-│  pdf/       merge split rotate export_images extract_images            │
+│  pdf/       merge split rotate remove_blank compress export_images     │
 │             images_to_pdf invoice ranges（页范围） thumbnails（缩略图缓存） │
-│             engine（动态加载）                                          │
+│             extract_images engine（动态加载）                         │
 │  state.rs   任务记录表 + 取消令牌（managed state，上限 50 条）           │
 │  events.rs  task:progress / task:log / task:finished / task:failed      │
 └───────────────────────────▲────────────────────────────────────────────┘
@@ -268,7 +268,7 @@
       <h4>后端 <code>src-tauri/src/</code></h4>
       <p style="margin-top:8px">
         <code>commands/</code> tasks · pdf · fs · app ·
-        <code>pdf/</code> engine · merge · split · rotate · export_images · extract_images · images_to_pdf · invoice · ranges · thumbnails · imaging · info · types ·
+        <code>pdf/</code> engine · merge · split · rotate · remove_blank · compress · export_images · extract_images · images_to_pdf · invoice · ranges · thumbnails · imaging · info · types ·
         <code>state.rs</code> · <code>events.rs</code> · <code>error.rs</code> · <code>lib.rs</code>
       </p>
     </div>
@@ -278,7 +278,7 @@
 <!-- ===================== 功能 ===================== -->
 <section id="features">
   <h2><span class="dot"></span>功能清单</h2>
-  <p class="lead">七大处理功能 + 设置页 + 关于页。全部由 <code>features/registry.ts</code> 的功能注册表统一驱动。</p>
+  <p class="lead">九大处理功能 + 设置页 + 关于页。全部由 <code>features/registry.ts</code> 的功能注册表统一驱动。</p>
 
   <div class="grid g2">
     <div class="card">
@@ -296,6 +296,14 @@
     <div class="card">
       <h4><span class="accent-rotate">◈</span> 旋转 PDF <span class="pill">organize</span></h4>
       <p>按 90 / 180 / 270 度旋转指定页范围，缩略图网格实时预览旋转效果。支持「原地覆盖」模式（此时隐藏输出目录选择）。</p>
+    </div>
+    <div class="card">
+      <h4><span class="accent-rmblank">◈</span> 删除空白页 <span class="pill">organize</span></h4>
+      <p>每页以 72 DPI 低分辨率渲染，统计非白像素占比，低于阈值的页判为空白并倒序删除；注释一并渲染（印章 / 批注也算内容）。选项：空白判定阈值（0.01–50%，默认 0.5%）、原地覆盖（经临时文件原子替换）。全部页均空白时拒绝处理，完成消息列出被删页码。另存时按 <code>{stem}_noblank_pdfai.cn.pdf</code> 规则命名。</p>
+    </div>
+    <div class="card">
+      <h4><span class="accent-compress">◈</span> PDF 压缩 <span class="pill">organize</span></h4>
+      <p>整页栅格化为 JPEG 后按原始页面尺寸重建文档（图像化压缩，与服务端 compress_pdf 同路线），对扫描件 / 图片型文档收益最大；文字层会丢失（不可再选择）。选项：压缩程度三档预设（低 / 中 / 高，默认中），前端映射为分辨率与 JPEG 质量（220/85、150/70、100/50）。压缩后体积未减小时自动保留原始文件，保证不会越压越大；完成消息展示前后体积与减小百分比。输出按 <code>{stem}_compressed_pdfai.cn.pdf</code> 规则命名。</p>
     </div>
     <div class="card">
       <h4><span class="accent-pdf2img">◈</span> PDF 转图片 <span class="pill">convert</span></h4>

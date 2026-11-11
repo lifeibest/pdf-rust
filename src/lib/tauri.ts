@@ -122,6 +122,8 @@ export interface TaskRecord {
   errorKind: ErrorKind | null;
   startedAt: number;
   elapsedMs: number;
+  /** 完成摘要（如压缩率），结果区常驻展示 */
+  summary: string | null;
 }
 
 export interface ProgressPayload {
@@ -143,6 +145,7 @@ export interface FinishedPayload {
   feature: string;
   outputs: OutputFile[];
   elapsedMs: number;
+  summary: string | null;
 }
 
 export interface FailedPayload {
@@ -163,6 +166,8 @@ export type TaskRequest =
   | { kind: "merge"; options: MergeOptions }
   | { kind: "split"; options: SplitOptions }
   | { kind: "rotate"; options: RotateOptions }
+  | { kind: "rmblank"; options: RemoveBlankOptions }
+  | { kind: "compress"; options: CompressOptions }
   | { kind: "pdf2img"; options: ExportImagesOptions }
   | { kind: "extractimg"; options: ExtractImagesOptions }
   | { kind: "img2pdf"; options: ImagesToPdfOptions }
@@ -204,6 +209,27 @@ export interface RotateOptions {
   degrees: number;
   scope: PageScope;
   inPlace: boolean;
+  outputName: string | null;
+}
+
+/** 删除空白页：与 Rust `pdf::remove_blank::RemoveBlankOptions` 对齐。 */
+export interface RemoveBlankOptions {
+  source: string;
+  password: string | null;
+  /** 空白判定阈值：非白像素占比（百分比）低于该值的页被删除 */
+  threshold: number;
+  inPlace: boolean;
+  outputName: string | null;
+}
+
+/** PDF 压缩（栅格化重建）：与 Rust `pdf::compress::CompressOptions` 对齐。 */
+export interface CompressOptions {
+  source: string;
+  password: string | null;
+  /** 栅格化 DPI（72-600） */
+  dpi: number;
+  /** JPEG 质量（1-100） */
+  quality: number;
   outputName: string | null;
 }
 

@@ -37,6 +37,8 @@ export interface TaskRunner {
   errorKind: ErrorKind | null;
   errorMessage: string | null;
   elapsedMs: number;
+  /** 完成摘要（如压缩率），完成后在结果区常驻展示 */
+  summary: string | null;
   start(request: TaskRequest, options?: StartOptions): Promise<TaskRecord | null>;
   cancel(): Promise<void>;
   reset(): void;
@@ -135,6 +137,7 @@ export function useTaskRunner(feature: FeatureId): TaskRunner {
     errorKind,
     errorMessage,
     elapsedMs: task?.elapsedMs ?? 0,
+    summary: task?.summary ?? null,
     start,
     cancel,
     reset,

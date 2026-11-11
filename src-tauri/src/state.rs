@@ -48,6 +48,8 @@ pub struct TaskRecord {
     /// Unix 毫秒时间戳
     pub started_at: i64,
     pub elapsed_ms: u64,
+    /// 完成摘要（如压缩率），结果区常驻展示；模块未写入时为 None
+    pub summary: Option<String>,
 }
 
 impl TaskRecord {
@@ -64,6 +66,7 @@ impl TaskRecord {
             error_kind: None,
             started_at: now_ms(),
             elapsed_ms: 0,
+            summary: None,
         }
     }
 
@@ -131,11 +134,13 @@ impl AppState {
         id: &str,
         outputs: Vec<OutputFile>,
         elapsed_ms: u64,
+        summary: Option<String>,
     ) -> Option<TaskRecord> {
         self.complete(id, elapsed_ms, |record| {
             record.status = TaskStatus::Finished;
             record.outputs = outputs;
             record.message = "已完成".to_string();
+            record.summary = summary;
         })
     }
 
@@ -297,7 +302,7 @@ mod tests {
 
         state.set_progress("t1", 2, 5, "处理中");
         let record = state
-            .finish_task("t1", vec![output("/tmp/a.pdf")], 120)
+            .finish_task("t1", vec![output("/tmp/a.pdf")], 120, None)
             .expect("应当存在");
         assert_eq!(record.status, TaskStatus::Finished);
         assert_eq!(record.current, 2);
@@ -333,7 +338,7 @@ mod tests {
         let state = AppState::default();
         state.start_task("live", "merge");
         state.start_task("done", "merge");
-        state.finish_task("done", vec![], 1);
+        state.finish_task("done", vec![], 1, None);
 
         assert_eq!(state.clear_tasks(), 1);
         let ids = state
@@ -350,7 +355,7 @@ mod tests {
         for index in 0..(MAX_TASK_RECORDS + 10) {
             let id = format!("t{index}");
             state.start_task(&id, "merge");
-            state.finish_task(&id, vec![], index as u64);
+            state.finish_task(&id, vec![], index as u64, None);
         }
         assert!(state.list_tasks().len() <= MAX_TASK_RECORDS);
     }

@@ -127,6 +127,10 @@ function TaskRow({ task, onCancel }: TaskRowProps): ReactElement {
         </p>
       ) : null}
 
+      {task.status === "finished" && task.summary ? (
+        <p className="break-words text-[11px] font-medium text-ink-muted">{task.summary}</p>
+      ) : null}
+
       {task.status === "finished" ? <OutputList outputs={task.outputs} dense /> : null}
 
       {task.status !== "running" ? (

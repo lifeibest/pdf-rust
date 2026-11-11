@@ -16,11 +16,13 @@ use tauri_plugin_notification::NotificationExt;
 
 use crate::error::AppError;
 use crate::events::{self, FailedPayload, FinishedPayload, ProgressPayload};
+use crate::pdf::compress::{self, CompressOptions};
 use crate::pdf::export_images::{self, ExportImagesOptions};
 use crate::pdf::extract_images::{self, ExtractImagesOptions};
 use crate::pdf::images_to_pdf::{self, ImagesToPdfOptions};
 use crate::pdf::invoice::{self, InvoiceMergeOptions};
 use crate::pdf::merge::{self, MergeOptions};
+use crate::pdf::remove_blank::{self, RemoveBlankOptions};
 use crate::pdf::rotate::{self, RotateOptions};
 use crate::pdf::split::{self, SplitOptions};
 use crate::pdf::thumbnails;
@@ -38,6 +40,10 @@ pub enum TaskRequest {
     Split(SplitOptions),
     #[serde(rename = "rotate")]
     Rotate(RotateOptions),
+    #[serde(rename = "rmblank")]
+    RemoveBlank(RemoveBlankOptions),
+    #[serde(rename = "compress")]
+    Compress(CompressOptions),
     #[serde(rename = "pdf2img")]
     ExportImages(ExportImagesOptions),
     #[serde(rename = "extractimg")]
@@ -55,6 +61,8 @@ impl TaskRequest {
             TaskRequest::Merge(_) => "merge",
             TaskRequest::Split(_) => "split",
             TaskRequest::Rotate(_) => "rotate",
+            TaskRequest::RemoveBlank(_) => "rmblank",
+            TaskRequest::Compress(_) => "compress",
             TaskRequest::ExportImages(_) => "pdf2img",
             TaskRequest::ExtractImages(_) => "extractimg",
             TaskRequest::ImagesToPdf(_) => "img2pdf",
@@ -68,6 +76,8 @@ impl TaskRequest {
             TaskRequest::Merge(_) => "PDF 合并",
             TaskRequest::Split(_) => "PDF 拆分",
             TaskRequest::Rotate(_) => "PDF 旋转",
+            TaskRequest::RemoveBlank(_) => "删除空白页",
+            TaskRequest::Compress(_) => "PDF 压缩",
             TaskRequest::ExportImages(_) => "PDF 转图片",
             TaskRequest::ExtractImages(_) => "PDF 提取图片",
             TaskRequest::ImagesToPdf(_) => "图片转 PDF",
@@ -147,6 +157,7 @@ pub async fn run_task(
 
         let outputs = dispatch(&request, &ctx, &output_dir, &mut progress);
         let elapsed_ms = started.elapsed().as_millis() as u64;
+        let summary = ctx.summary();
 
         finalize(
             &worker,
@@ -155,6 +166,7 @@ pub async fn run_task(
             label,
             outputs,
             elapsed_ms,
+            summary,
             should_notify,
         )
     })
@@ -191,6 +203,8 @@ fn dispatch(
         TaskRequest::Merge(opts) => merge::run(ctx, out_dir, opts, progress),
         TaskRequest::Split(opts) => split::run(ctx, out_dir, opts, progress),
         TaskRequest::Rotate(opts) => rotate::run(ctx, out_dir, opts, progress),
+        TaskRequest::RemoveBlank(opts) => remove_blank::run(ctx, out_dir, opts, progress),
+        TaskRequest::Compress(opts) => compress::run(ctx, out_dir, opts, progress),
         TaskRequest::ExportImages(opts) => export_images::run(ctx, out_dir, opts, progress),
         TaskRequest::ExtractImages(opts) => extract_images::run(ctx, out_dir, opts, progress),
         TaskRequest::ImagesToPdf(opts) => images_to_pdf::run(ctx, out_dir, opts, progress),
@@ -206,6 +220,7 @@ fn finalize(
     label: &str,
     outputs: Result<Vec<OutputFile>, AppError>,
     elapsed_ms: u64,
+    summary: Option<String>,
     should_notify: bool,
 ) -> Result<TaskRecord, AppError> {
     let state = app.state::<AppState>();
@@ -213,7 +228,7 @@ fn finalize(
     match outputs {
         Ok(files) => {
             let record = state
-                .finish_task(task_id, files.clone(), elapsed_ms)
+                .finish_task(task_id, files.clone(), elapsed_ms, summary.clone())
                 .ok_or_else(|| AppError::Internal("任务记录已丢失".to_string()))?;
 
             let _ = app.emit(
@@ -223,6 +238,7 @@ fn finalize(
                     feature: feature.to_string(),
                     outputs: files.clone(),
                     elapsed_ms,
+                    summary,
                 },
             );
 
@@ -409,6 +425,8 @@ mod tests {
             TaskRequest::Merge(MergeOptions::default()).feature_id(),
             TaskRequest::Split(SplitOptions::default()).feature_id(),
             TaskRequest::Rotate(RotateOptions::default()).feature_id(),
+            TaskRequest::RemoveBlank(RemoveBlankOptions::default()).feature_id(),
+            TaskRequest::Compress(CompressOptions::default()).feature_id(),
             TaskRequest::ExportImages(ExportImagesOptions::default()).feature_id(),
             TaskRequest::ExtractImages(ExtractImagesOptions::default()).feature_id(),
             TaskRequest::ImagesToPdf(ImagesToPdfOptions::default()).feature_id(),
@@ -420,6 +438,8 @@ mod tests {
                 "merge",
                 "split",
                 "rotate",
+                "rmblank",
+                "compress",
                 "pdf2img",
                 "extractimg",
                 "img2pdf",

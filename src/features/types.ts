@@ -12,6 +12,8 @@ export type FeatureId =
   | "merge"
   | "split"
   | "rotate"
+  | "rmblank"
+  | "compress"
   | "pdf2img"
   | "extractimg"
   | "img2pdf"
@@ -48,6 +50,13 @@ export interface SelectField extends FieldBase {
   default: string;
 }
 
+/** 分段单选：选项少的预设档位（如压缩程度），选中项的描述随切换展示。 */
+export interface SegmentedField extends FieldBase {
+  type: "segmented";
+  options: { value: string; labelKey: string; hintKey?: string }[];
+  default: string;
+}
+
 export interface NumberField extends FieldBase {
   type: "number";
   min: number;
@@ -81,6 +90,7 @@ export interface PageRangeField extends FieldBase {
 
 export type OptionField =
   | SelectField
+  | SegmentedField
   | NumberField
   | SwitchField
   | TextField

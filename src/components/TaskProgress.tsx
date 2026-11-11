@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { CheckCircle2, Loader2, Play, XCircle, Ban } from "lucide-react";
+import { CheckCircle2, Loader2, Play, Sparkles, XCircle, Ban } from "lucide-react";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -36,7 +36,7 @@ export function TaskProgress({
   onRunAnother,
 }: TaskProgressProps): ReactElement {
   const { t } = useTranslation();
-  const { status, running, current, total, message, outputs, errorKind, errorMessage, elapsedMs } =
+  const { status, running, current, total, message, outputs, errorKind, errorMessage, elapsedMs, summary } =
     runner;
 
   const ratio = percent(current, total);
@@ -105,6 +105,12 @@ export function TaskProgress({
               </span>
             ) : null}
           </p>
+          {summary ? (
+            <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-subtle px-3 py-2 text-sm text-ink">
+              <Sparkles size={15} className="mt-0.5 shrink-0 text-brand-500" />
+              <span className="min-w-0 flex-1 break-words font-medium tabular-nums">{summary}</span>
+            </p>
+          ) : null}
           <OutputList outputs={outputs} />
           {onRunAnother ? (
             <button type="button" className="btn-ghost self-start" onClick={onRunAnother}>

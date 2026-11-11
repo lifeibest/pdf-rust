@@ -45,6 +45,14 @@ const zhCN = {
       title: "PDF 旋转",
       desc: "批量旋转页面，支持奇偶页与指定页码",
     },
+    rmblank: {
+      title: "删除空白页",
+      desc: "按墨量自动识别并删除空白页，阈值可调，可原地覆盖",
+    },
+    compress: {
+      title: "PDF 压缩",
+      desc: "显著减小文件体积，适合扫描件与图片型文档（压缩后文字不可选择）",
+    },
     wechat: {
       title: "微信文章转 PDF",
       desc: "粘贴公众号文章链接，整页导出为 PDF",
@@ -159,6 +167,12 @@ const zhCN = {
     inPlaceWarning: "原地修改会直接覆盖源文件，且无法撤销",
   },
 
+  rmblank: {
+    preview: "页面预览",
+    previewHint: "空白页按非白像素占比判定，可对照缩略图确认",
+    inPlaceWarning: "原地修改会直接覆盖源文件，且无法撤销",
+  },
+
   wechat: {
     article: "文章链接",
     articleHint: "仅支持 mp.weixin.qq.com 公众号文章",
@@ -206,6 +220,15 @@ const zhCN = {
     degrees: "旋转角度",
     inPlace: "直接修改原文件",
     inPlaceHint: "不生成新文件，原地覆盖（不可撤销）",
+    threshold: "空白判定阈值",
+    thresholdHint: "非白像素占比低于该值的页判为空白；调大可清掉带零星噪点的扫描页",
+    compressLevel: "压缩程度",
+    compressLevelValue: { low: "低压缩", medium: "中压缩", high: "高压缩" },
+    compressLevelHint: {
+      low: "优先保留清晰度，适合打印与存档",
+      medium: "推荐：清晰度与体积均衡，适合日常分享",
+      high: "体积最小，适合邮件附件与网络传输",
+    },
     splitMode: "拆分方式",
     rangesSpec: "拆分范围",
     rangesSpecHint: "每个逗号分隔的范围产出一个文件",
@@ -246,6 +269,7 @@ const zhCN = {
       px: "像素",
       page: "页",
       kb: "KB",
+      percent: "%",
     },
     splitValue: {
       every_n: "每 N 页一个文件",
@@ -353,6 +377,8 @@ const zhCN = {
     privacy: "隐私说明",
     privacyText: "所有 PDF 处理都在本机完成，应用不会上传任何文件，也不联网校验授权。",
     changelog: "更新日志",
+    cl20261112c: "新增 PDF 压缩功能",
+    cl20261112b: "新增删除空白页功能",
     cl20261112: "新增 PDF 提取图片功能",
     cl20261111: "新增发票合并功能",
     cl20261110: "新增微信公众号文章转 PDF",

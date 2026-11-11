@@ -2,7 +2,7 @@
 
 PDF智转 是一个 Tauri 2 桌面应用：**所有 PDF 计算都在 Rust 侧完成**，前端只负责
 界面与任务编排。唯一 PDF 引擎是 PDFium（`pdfium-render 0.9.5`，对应
-`chromium/8125`），六大功能共用它，保证输出行为一致。
+`chromium/8125`），八大功能共用它，保证输出行为一致。
 
 ```
 ┌──────────────────────────── WebView (React 19) ────────────────────────────┐
@@ -15,8 +15,8 @@ PDF智转 是一个 Tauri 2 桌面应用：**所有 PDF 计算都在 Rust 侧完
                 │ invoke（命令）                 │ emit（事件）
 ┌───────────────┴───────────────────────────────┴────────────────────────────┐
 │  commands/   tasks.rs（任务编排） pdf.rs / fs.rs / app.rs                    │
-│  pdf/        merge split rotate export_images extract_images             │
-│              images_to_pdf invoice                                       │
+│  pdf/        merge split rotate remove_blank compress export_images      │
+│              extract_images images_to_pdf invoice                        │
 │              ranges（页范围表达式） thumbnails（缩略图缓存） engine（动态加载） │
 │  state.rs    任务记录表 + 取消令牌（managed state）                          │
 │  events.rs   task:progress / task:log / task:finished / task:failed          │
@@ -42,7 +42,7 @@ PDF智转 是一个 Tauri 2 桌面应用：**所有 PDF 计算都在 Rust 侧完
 | --- | --- | --- |
 | `task:progress` | `{taskId, feature, current, total, message}` | 进度条与状态文字 |
 | `task:log` | `{taskId, level, message}` | 非致命告警（当前仅记录） |
-| `task:finished` | `{taskId, feature, outputs, elapsedMs}` | 产出列表、通知 |
+| `task:finished` | `{taskId, feature, outputs, elapsedMs, summary}` | 产出列表、完成摘要（如压缩率）、通知 |
 | `task:failed` | `{taskId, feature, error, elapsedMs}` | 错误展示（`error.kind` 映射 i18n） |
 
 ### 错误模型
@@ -150,7 +150,8 @@ Tauri 会拦截 HTML5 拖放（`dragDropEnabled`），因此统一订阅
 ## 测试
 
 - Rust 单测：`ranges.rs` 全部分支、`images_to_pdf` 的 px→pt 与适配缩放、
-  `split` 的分组边界、`rotate` 的角度归一化、`fs` 的 `stat_paths`。
+  `split` 的分组边界、`rotate` 的角度归一化、`remove_blank` 的墨量占比、
+  `compress` 的体积文案与 JPEG 编码、`fs` 的 `stat_paths`。
 - Rust 集成测试（`src-tauri/tests/`）：用代码生成 6 页 fixture PDF（不提交二进制），
-  覆盖 merge / split / rotate / export / extract / import / invoice 七条链路。
+  覆盖 merge / split / rotate / rmblank / compress / export / extract / import / invoice 九条链路。
 - 前端：`pnpm typecheck` 零错误；`TranslationShape` 保证双语文案结构同步。

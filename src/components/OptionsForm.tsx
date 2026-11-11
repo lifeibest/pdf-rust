@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import { countScope, validateScope, type ScopeSelection } from "@/lib/pages";
-import type { NumberField, OptionField, OptionValues, PageRangeField, SelectField, SwitchField, TextField } from "@/features/types";
+import type { NumberField, OptionField, OptionValues, PageRangeField, SegmentedField, SelectField, SwitchField, TextField } from "@/features/types";
 
 export interface OptionsFormProps {
   fields: OptionField[];
@@ -81,6 +81,8 @@ function Control<F extends OptionField>({
   switch (field.type) {
     case "select":
       return <SelectControl field={field} value={value} onChange={onChange} />;
+    case "segmented":
+      return <SegmentedControl field={field} value={value} onChange={onChange} />;
     case "number":
       return <NumberControl field={field} value={value} onChange={onChange} />;
     case "text":
@@ -109,6 +111,50 @@ function SelectControl({ field, value, onChange }: ControlProps<SelectField>): R
         </option>
       ))}
     </select>
+  );
+}
+
+/** 分段单选：与页范围控件同一套视觉语言；选中档位的描述随切换淡入。 */
+function SegmentedControl({ field, value, onChange }: ControlProps<SegmentedField>): ReactElement {
+  const { t } = useTranslation();
+  const current = typeof value === "string" ? value : field.default;
+  const selected = field.options.find((option) => option.value === current);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div
+        id={`opt-${field.key}`}
+        role="radiogroup"
+        aria-label={t(field.labelKey)}
+        className="grid gap-1 rounded-xl bg-surface-subtle p-1"
+        style={{ gridTemplateColumns: `repeat(${field.options.length}, minmax(0, 1fr))` }}
+      >
+        {field.options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={option.value === current}
+            onClick={() => onChange(field.key, option.value)}
+            className={clsx(
+              "rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
+              option.value === current
+                ? "bg-surface text-brand-600 shadow-card"
+                : "text-ink-muted hover:text-ink",
+            )}
+          >
+            {t(option.labelKey)}
+          </button>
+        ))}
+      </div>
+      {selected?.hintKey ? (
+        <p
+          key={selected.value}
+          className="animate-fade-in text-[11px] leading-relaxed text-ink-faint"
+        >
+          {t(selected.hintKey)}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
