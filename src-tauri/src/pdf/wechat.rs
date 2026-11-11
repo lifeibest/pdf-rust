@@ -122,50 +122,39 @@ fn pending_images_js() -> &'static str {
     })()"#
 }
 
-/// 量取正文的**实际可见内容**水平范围与整页高。微信桌面版常把 `#js_content` 渲染成
-/// 铺满视口的宽块、内容却左对齐，若直接量容器会得到视口宽（等于没裁剪）。
-/// 故这里量标题文本 + 正文文本 + 所有图片的并集矩形（跳过近乎满宽的容器），
-/// 得到真正的内容左右边界。返回 `"left,width,height"`（四舍五入整数）；失败返回 `"0,0,0"`。
+/// 量取正文打印区域。打印前 `normalize_layout_js` 已把正文容器锁定为固定宽度并居中，
+/// 故这里直接量正文容器的 `getBoundingClientRect` 即得该固定宽度与水平位置（廉价且稳定，
+/// 不再依赖遍历图片 / 长文本 `createRange`，避免超时或量到铺满视口的容器）。
+/// 返回 `"left,width,height"`（四舍五入整数）；失败返回 `"0,0,0"`。
 fn content_size_js() -> &'static str {
     r#"(function(){
         try{
-            var vw = document.documentElement.clientWidth || window.innerWidth || 0;
-            var minL = Infinity, maxR = -Infinity;
-            var add = function(r){
-                if(!r || r.width < 2 || r.height < 2) return;
-                if(vw && r.width > vw * 0.95) return;
-                if(r.left < minL) minL = r.left;
-                if(r.right > maxR) maxR = r.right;
-            };
-            var textRect = function(el){
-                if(!el) return null;
-                try{ var rng = document.createRange(); rng.selectNodeContents(el); return rng.getBoundingClientRect(); }catch(e){ return null; }
-            };
-            var box = document.querySelector('#js_content') || document.querySelector('.rich_media_content') || document.querySelector('#content');
-            var title = document.querySelector('#activity-name') || document.querySelector('.rich_media_title');
-            add(textRect(title));
-            add(title && title.getBoundingClientRect());
-            add(textRect(box));
-            var imgs = document.querySelectorAll('#js_content img, .rich_media_content img');
-            for(var i=0;i<imgs.length;i++){ add(imgs[i].getBoundingClientRect()); }
-            if(minL === Infinity || maxR === -Infinity){
-                if(box){ var br = box.getBoundingClientRect(); minL = br.left; maxR = br.right; }
-                else { minL = 0; maxR = vw; }
+            var sel = ['#js_content','.rich_media_content','#content'];
+            var left = 0, width = 0;
+            for(var i=0;i<sel.length;i++){
+                var el = document.querySelector(sel[i]);
+                if(el){
+                    var r = el.getBoundingClientRect();
+                    if(r.width > 200){ left = Math.round(r.left); width = Math.round(r.width); break; }
+                }
             }
-            var left = Math.round(minL), width = Math.round(maxR - minL);
+            if(!width){ width = document.documentElement.clientWidth || 0; }
             var h = Math.max(document.body.scrollHeight || 0, document.documentElement.scrollHeight || 0, 1);
             return left + ',' + width + ',' + h;
         }catch(e){ return '0,0,0'; }
     })()"#
 }
 
-/// 打印前的版式归一化：裁掉横向溢出、等比缩小超宽媒体元素，避免个别元素撑破正文列
-/// 导致按正文宽裁剪时右侧内容被切。
+/// 打印前的版式归一化：把微信正文容器锁定为固定宽度（`800px`，改这里即可调正文宽窄）
+/// 并用 `margin:0 auto` 居中——桌面版常把正文铺满视口且左对齐，锁定+居中后正文列固定宽度、
+/// 左右对称居中，后续按实测（此时即该宽度）裁剪页矩形才稳定；同时裁掉横向溢出、等比缩小
+/// 超宽媒体元素，避免个别元素撑破正文列。
 fn normalize_layout_js() -> &'static str {
     r#"(function(){
         try{
             var css = [
                 'html,body{overflow-x:hidden!important;}',
+                '#js_article,#js_content,.rich_media_content,#activity-name,.rich_media_title,.rich_media_meta_list,.rich_media_inner{max-width:800px!important;margin-left:auto!important;margin-right:auto!important;}',
                 'img,video,iframe,svg,figure,section,pre{max-width:100%!important;}',
                 'img{height:auto!important;}'
             ].join('');
@@ -454,6 +443,10 @@ mod tests {
         let js = normalize_layout_js();
         assert!(js.contains("overflow-x:hidden"));
         assert!(js.contains("max-width:100%"));
+        // 关键：锁定正文容器为固定宽度并 margin auto 居中（从源头保证居中）
+        assert!(js.contains("#js_content"));
+        assert!(js.contains("margin-left:auto!important"));
+        assert!(js.contains("margin-right:auto!important"));
     }
 
     #[test]
@@ -462,9 +455,6 @@ mod tests {
         assert!(js.contains("#js_content"));
         assert!(js.contains("getBoundingClientRect"));
         assert!(js.contains("scrollHeight"));
-        // 量的是真实内容（标题文本 + 图片），而非可能铺满视口的容器
-        assert!(js.contains("createRange"));
-        assert!(js.contains("#activity-name"));
     }
 
     #[test]
