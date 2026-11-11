@@ -55,6 +55,8 @@ pub fn print(win: &WebviewWindow, out_path: &Path, cancel: &CancelToken) -> Resu
                 .chain(std::iter::once(0))
                 .collect();
 
+            // 完成回调会 move 捕获一个 Sender；克隆一份给它，原 `tx` 留给 PrintToPdf 同步失败分支
+            let tx_done = tx.clone();
             let handler = PrintToPdfCompletedHandler::create(Box::new(
                 move |result: windows::core::Result<()>, success: bool| {
                     let message = match (result.is_ok(), success) {
@@ -62,7 +64,7 @@ pub fn print(win: &WebviewWindow, out_path: &Path, cancel: &CancelToken) -> Resu
                         (true, false) => Err("生成 PDF 失败".to_string()),
                         (false, _) => Err("生成 PDF 出错".to_string()),
                     };
-                    let _ = tx.send(message);
+                    let _ = tx_done.send(message);
                     Ok(())
                 },
             ));
