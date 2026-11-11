@@ -164,6 +164,7 @@ export type TaskRequest =
   | { kind: "split"; options: SplitOptions }
   | { kind: "rotate"; options: RotateOptions }
   | { kind: "pdf2img"; options: ExportImagesOptions }
+  | { kind: "extractimg"; options: ExtractImagesOptions }
   | { kind: "img2pdf"; options: ImagesToPdfOptions }
   | { kind: "invoice"; options: InvoiceMergeOptions };
 
@@ -214,6 +215,22 @@ export interface ExportImagesOptions {
   format: ImageFormat;
   quality: number;
   maxEdgePx: number | null;
+  zip: boolean;
+  outputName: string | null;
+}
+
+/** 提取输出格式：auto 保留原格式（JPEG 无损直写），其余统一重编码。 */
+export type ExtractFormat = "auto" | "png" | "jpeg";
+
+/** PDF 提取图片：抽取内嵌原始图片对象，与 Rust `pdf::extract_images::ExtractImagesOptions` 对齐。 */
+export interface ExtractImagesOptions {
+  source: string;
+  password: string | null;
+  scope: PageScope;
+  /** 最小图片体积（KB），0 表示不过滤 */
+  minSizeKb: number;
+  format: ExtractFormat;
+  quality: number;
   zip: boolean;
   outputName: string | null;
 }

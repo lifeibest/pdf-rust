@@ -9,6 +9,7 @@
 import type { FeatureCategory, FeatureDefinition, SystemPageDefinition } from "./types";
 
 import activate from "./activate/meta";
+import extractimg from "./extractimg/meta";
 import img2pdf from "./img2pdf/meta";
 import invoice from "./invoice/meta";
 import merge from "./merge/meta";
@@ -26,6 +27,7 @@ export const FEATURES: FeatureDefinition[] = [
   split,
   rotate,
   pdf2img,
+  extractimg,
   img2pdf,
   wechat,
 ].sort((left, right) => left.order - right.order || left.id.localeCompare(right.id));

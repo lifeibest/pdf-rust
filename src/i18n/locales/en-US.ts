@@ -34,6 +34,10 @@ const enUS: TranslationShape = {
       title: "PDF to Images",
       desc: "Export pages as PNG / JPEG / WebP, optionally zipped",
     },
+    extractimg: {
+      title: "Extract PDF Images",
+      desc: "Pull out embedded images at native resolution — lossless JPEG, optionally zipped",
+    },
     split: {
       title: "Split PDF",
       desc: "Split by page count, ranges, or one file per page",
@@ -191,6 +195,8 @@ const enUS: TranslationShape = {
     quality: "Quality",
     maxEdgePx: "Max edge (px)",
     maxEdgeHint: "Guards against huge images at high DPI; leave empty for the default",
+    minSizeKb: "Min image size",
+    minSizeHint: "Skip embedded images smaller than this; 0 disables the filter",
     zip: "Pack into a zip",
     zipHint: "Combine all output files into a single archive",
     scope: "Pages",
@@ -234,10 +240,14 @@ const enUS: TranslationShape = {
       jpeg: "JPEG",
       webp: "WebP",
     },
+    extractFormatValue: {
+      auto: "Keep original (lossless JPEG)",
+    },
     unit: {
       mm: "mm",
       px: "px",
       page: "pages",
+      kb: "KB",
     },
     splitValue: {
       every_n: "Every N pages",
@@ -346,6 +356,7 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
     changelog: "Changelog",
+    cl20261112: "Added the Extract PDF Images feature",
     cl20261111: "Added the Merge Invoices feature",
     cl20261110: "Added WeChat article to PDF export",
     cl20261108: "Images to PDF: added image preview",

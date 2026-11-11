@@ -13,6 +13,7 @@ export type FeatureId =
   | "split"
   | "rotate"
   | "pdf2img"
+  | "extractimg"
   | "img2pdf"
   | "invoice"
   | "wechat";

@@ -33,6 +33,10 @@ const zhCN = {
       title: "PDF 转图片",
       desc: "按页导出 PNG / JPEG / WebP，可打包为 zip",
     },
+    extractimg: {
+      title: "PDF 提取图片",
+      desc: "抽取内嵌的原始图片，JPEG 无损直提，可打包为 zip",
+    },
     split: {
       title: "PDF 拆分",
       desc: "按页数、范围或逐页拆成多个 PDF",
@@ -189,6 +193,8 @@ const zhCN = {
     quality: "压缩质量",
     maxEdgePx: "最长边像素上限",
     maxEdgeHint: "防止高 DPI 下生成超大图片，留空使用默认值",
+    minSizeKb: "最小图片体积",
+    minSizeHint: "小于该体积的内嵌图片将被跳过，0 表示不过滤",
     zip: "打包为 zip",
     zipHint: "多个输出文件压缩成一个 zip",
     scope: "作用范围",
@@ -232,10 +238,14 @@ const zhCN = {
       jpeg: "JPEG",
       webp: "WebP",
     },
+    extractFormatValue: {
+      auto: "保留原格式（JPEG 无损）",
+    },
     unit: {
       mm: "毫米",
       px: "像素",
       page: "页",
+      kb: "KB",
     },
     splitValue: {
       every_n: "每 N 页一个文件",
@@ -343,6 +353,7 @@ const zhCN = {
     privacy: "隐私说明",
     privacyText: "所有 PDF 处理都在本机完成，应用不会上传任何文件，也不联网校验授权。",
     changelog: "更新日志",
+    cl20261112: "新增 PDF 提取图片功能",
     cl20261111: "新增发票合并功能",
     cl20261110: "新增微信公众号文章转 PDF",
     cl20261108: "图片转 PDF 增加图片预览功能",

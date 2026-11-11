@@ -17,6 +17,7 @@ use tauri_plugin_notification::NotificationExt;
 use crate::error::AppError;
 use crate::events::{self, FailedPayload, FinishedPayload, ProgressPayload};
 use crate::pdf::export_images::{self, ExportImagesOptions};
+use crate::pdf::extract_images::{self, ExtractImagesOptions};
 use crate::pdf::images_to_pdf::{self, ImagesToPdfOptions};
 use crate::pdf::invoice::{self, InvoiceMergeOptions};
 use crate::pdf::merge::{self, MergeOptions};
@@ -39,6 +40,8 @@ pub enum TaskRequest {
     Rotate(RotateOptions),
     #[serde(rename = "pdf2img")]
     ExportImages(ExportImagesOptions),
+    #[serde(rename = "extractimg")]
+    ExtractImages(ExtractImagesOptions),
     #[serde(rename = "img2pdf")]
     ImagesToPdf(ImagesToPdfOptions),
     #[serde(rename = "invoice")]
@@ -53,6 +56,7 @@ impl TaskRequest {
             TaskRequest::Split(_) => "split",
             TaskRequest::Rotate(_) => "rotate",
             TaskRequest::ExportImages(_) => "pdf2img",
+            TaskRequest::ExtractImages(_) => "extractimg",
             TaskRequest::ImagesToPdf(_) => "img2pdf",
             TaskRequest::Invoice(_) => "invoice",
         }
@@ -65,6 +69,7 @@ impl TaskRequest {
             TaskRequest::Split(_) => "PDF 拆分",
             TaskRequest::Rotate(_) => "PDF 旋转",
             TaskRequest::ExportImages(_) => "PDF 转图片",
+            TaskRequest::ExtractImages(_) => "PDF 提取图片",
             TaskRequest::ImagesToPdf(_) => "图片转 PDF",
             TaskRequest::Invoice(_) => "发票合并",
         }
@@ -187,6 +192,7 @@ fn dispatch(
         TaskRequest::Split(opts) => split::run(ctx, out_dir, opts, progress),
         TaskRequest::Rotate(opts) => rotate::run(ctx, out_dir, opts, progress),
         TaskRequest::ExportImages(opts) => export_images::run(ctx, out_dir, opts, progress),
+        TaskRequest::ExtractImages(opts) => extract_images::run(ctx, out_dir, opts, progress),
         TaskRequest::ImagesToPdf(opts) => images_to_pdf::run(ctx, out_dir, opts, progress),
         TaskRequest::Invoice(opts) => invoice::run(ctx, out_dir, opts, progress),
     }
@@ -404,12 +410,21 @@ mod tests {
             TaskRequest::Split(SplitOptions::default()).feature_id(),
             TaskRequest::Rotate(RotateOptions::default()).feature_id(),
             TaskRequest::ExportImages(ExportImagesOptions::default()).feature_id(),
+            TaskRequest::ExtractImages(ExtractImagesOptions::default()).feature_id(),
             TaskRequest::ImagesToPdf(ImagesToPdfOptions::default()).feature_id(),
             TaskRequest::Invoice(InvoiceMergeOptions::default()).feature_id(),
         ];
         assert_eq!(
             ids,
-            ["merge", "split", "rotate", "pdf2img", "img2pdf", "invoice"]
+            [
+                "merge",
+                "split",
+                "rotate",
+                "pdf2img",
+                "extractimg",
+                "img2pdf",
+                "invoice"
+            ]
         );
     }
 
