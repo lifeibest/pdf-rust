@@ -1,6 +1,6 @@
 [package]
 name = "pdfai-cn"
-version = "0.3.0"
+version = "0.4.0"
 description = "PDF智转 - 基于 Tauri + Rust(PDFium) 的桌面 PDF 工具箱"
 authors = ["PDF智转"]
 edition = "2024"
