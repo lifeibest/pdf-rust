@@ -320,7 +320,7 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
     changelog: "Changelog",
-    cl20261111: "New feature: Merge Invoices — tile multiple A5 invoices onto one A4 sheet for printing",
+    cl20261111: "Added the Merge Invoices feature",
     cl20261108: "Images to PDF: added image preview",
     cl202611: "Privacy-first release — fully re-architected, no more cloud",
     checkUpdate: "Check for updates",
