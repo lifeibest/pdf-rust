@@ -22,12 +22,15 @@ export function Sidebar(): ReactElement {
 
   return (
     <nav className="flex h-full w-60 shrink-0 flex-col border-r border-line bg-surface">
-      {/* 顶部留白用来避开 macOS 的红绿灯按钮，同时充当窗口拖拽区 */}
-      <div data-tauri-drag-region className="flex h-14 shrink-0 items-end gap-2.5 px-4 pb-2">
-        <AppIcon size={26} className="rounded-lg" />
-        <span className="truncate text-sm font-semibold tracking-tight text-ink">
-          {t("app.name")}
-        </span>
+      {/* 顶部留白避开 macOS 的红绿灯按钮，同时充当窗口拖拽区；
+          水平方向与下方导航项左对齐（px-3 + px-2.5），不再顶到窗口左上角 */}
+      <div data-tauri-drag-region className="shrink-0 px-3 pb-2 pt-9">
+        <div className="flex items-center gap-2.5 px-2.5">
+          <AppIcon size={26} className="rounded-lg" />
+          <span className="truncate text-sm font-semibold tracking-tight text-ink">
+            {t("app.name")}
+          </span>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
