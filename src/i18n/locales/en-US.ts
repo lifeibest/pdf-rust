@@ -389,6 +389,7 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files; only initial license redemption connects once.",
     changelog: "Changelog",
+    cl20261126: "Fixed WeChat article centering layout in exported PDFs",
     cl20261125: "Added Apple HEIC photo format support",
     cl20261112c: "Added the Compress PDF feature",
     cl20261112b: "Added the Remove Blank Pages feature",
