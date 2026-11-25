@@ -380,6 +380,7 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files and performs no license checks online.",
     changelog: "Changelog",
+    cl20261125: "Added Apple HEIC photo format support",
     cl20261112c: "Added the Compress PDF feature",
     cl20261112b: "Added the Remove Blank Pages feature",
     cl20261112: "Added the Extract PDF Images feature",
