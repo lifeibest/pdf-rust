@@ -33,8 +33,9 @@ mod mac;
 #[cfg(windows)]
 mod win;
 
-/// 正文渲染宽度（CSS 像素），加载前的初始视口宽；真正打印前会按正文列实测宽修正。
-const CONTENT_WIDTH: f64 = 677.0;
+/// 初始视口宽（CSS 像素）：正文列 `680px` + 左右各 `50px` 留白 = `780px`，
+/// 确保视口本身就大于正文列，`margin: 0 auto` 能让正文严格居中并给足左右对称白边。
+const CONTENT_WIDTH: f64 = 780.0;
 /// 初始视口高度，加载后按内容自然增长。
 const CONTENT_HEIGHT: f64 = 1200.0;
 /// 实测正文列宽的下限，低于此视为无效（避免把页矩形锁成 0 或异常窄）。
@@ -146,14 +147,13 @@ fn pending_images_js() -> &'static str {
     })()"#
 }
 
-/// 量取正文打印区域。打印前 `normalize_layout_js` 已把正文容器锁定为固定宽度并居中，
-/// 故这里直接量正文容器的 `getBoundingClientRect` 即得该固定宽度与水平位置（廉价且稳定，
-/// 不再依赖遍历图片 / 长文本 `createRange`，避免超时或量到铺满视口的容器）。
+/// 量取正文打印区域。打印前 `normalize_layout_js` 已把正文主列锁定为 `680px` 并水平居中，
+/// 这里优先量取正文列容器的 `getBoundingClientRect` 即得精确的 `(left, width)`；
 /// 返回 `"left,width,height"`（四舍五入整数）；失败返回 `"0,0,0"`。
 fn content_size_js() -> &'static str {
     r#"(function(){
         try{
-            var sel = ['#js_content','.rich_media_content','#content'];
+            var sel = ['#js_content','.rich_media_content','.rich_media_area_primary_inner','#content'];
             var left = 0, width = 0;
             for(var i=0;i<sel.length;i++){
                 var el = document.querySelector(sel[i]);
@@ -169,17 +169,22 @@ fn content_size_js() -> &'static str {
     })()"#
 }
 
-/// 打印前的版式归一化：把微信正文容器锁定为固定宽度（`800px`，改这里即可调正文宽窄）
-/// 并用 `margin:0 auto` 居中——桌面版常把正文铺满视口且左对齐，锁定+居中后正文列固定宽度、
-/// 左右对称居中，后续按实测（此时即该宽度）裁剪页矩形才稳定；同时裁掉横向溢出、等比缩小
-/// 超宽媒体元素，避免个别元素撑破正文列。
+/// 打印前的版式归一化：
+/// 1. 隐藏微信 PC 端右侧悬浮二维码等非正文元素；
+/// 2. 将主内容列统一锁定为 `680px` 并用 `margin: 0 auto` 居中（配合 `780px` 视口，左右各有 `50px` 对称留白），
+///    同时清掉外层与内层不一致的左右 padding，避免标题、封面图与正文左右错位；
+/// 3. 裁掉横向溢出、等比缩小超宽媒体元素；`@media print` 同步约束 A4 打印页边距。
 fn normalize_layout_js() -> &'static str {
     r#"(function(){
         try{
             var css = [
-                'html,body{overflow-x:hidden!important;}',
-                '#js_article,#js_content,.rich_media_content,#activity-name,.rich_media_title,.rich_media_meta_list,.rich_media_inner{max-width:800px!important;margin-left:auto!important;margin-right:auto!important;}',
-                'img,video,iframe,svg,figure,section,pre{max-width:100%!important;}',
+                '@media print{@page{margin:12mm;}}',
+                'html,body{margin:0!important;padding:0!important;width:100%!important;background:#fff!important;overflow-x:hidden!important;}',
+                '#js_pc_qr_code,.qr_code_pc_outer{display:none!important;}',
+                '#js_article,.rich_media_area_primary{width:100%!important;max-width:100%!important;margin:0!important;padding-left:0!important;padding-right:0!important;box-sizing:border-box!important;}',
+                '.rich_media_area_primary_inner,.rich_media_inner{width:100%!important;max-width:680px!important;margin-left:auto!important;margin-right:auto!important;padding-left:0!important;padding-right:0!important;box-sizing:border-box!important;}',
+                '#js_content,.rich_media_content,#activity-name,.rich_media_title,.rich_media_meta_list{width:100%!important;max-width:680px!important;margin-left:auto!important;margin-right:auto!important;padding-left:0!important;padding-right:0!important;box-sizing:border-box!important;}',
+                'img,video,iframe,svg,figure,section,pre{max-width:100%!important;box-sizing:border-box!important;}',
                 'img{height:auto!important;}'
             ].join('');
             var old = document.getElementById('pdfai-print-normalize');

@@ -24,9 +24,19 @@ use super::{check_cancel, PRINT_DEADLINE, POLL_INTERVAL};
 use crate::error::AppError;
 use crate::pdf::CancelToken;
 
-/// 裁剪正文时左右各保留的固定白边（CSS 像素）。用固定值而非比例，保证不同宽度的
-/// 文章边距一致、左右对称（比例留白在正文贴边时会被 `max(0.0)` 截断导致左右不对称）。
+/// 裁剪正文时左右各保留的目标白边（CSS 像素）。
+/// 实际留白取 `PAGE_PAD.min(left)`，保证即使 `left < PAGE_PAD` 时左右白边也严格相等、绝不偏左。
 const PAGE_PAD: f64 = 50.0;
+
+/// 计算对称裁剪后的页矩形 `(x, rect_width)`：
+/// 左白边 `left - x` 与右白边 `(x + rect_width) - (left + width)` 恒等于 `pad`。
+fn symmetric_crop(left: f64, width: f64) -> (f64, f64) {
+    let safe_left = left.max(0.0);
+    let pad = PAGE_PAD.min(safe_left);
+    let x = safe_left - pad;
+    let rect_width = width + pad * 2.0;
+    (x, rect_width)
+}
 
 pub fn print(
     win: &WebviewWindow,
@@ -58,11 +68,10 @@ pub fn print(
             let cfg = size.and_then(|(left, width, height)| {
                 MainThreadMarker::new().map(|mtm| {
                     let config = WKPDFConfiguration::new(mtm);
-                    let x = (left - PAGE_PAD).max(0.0);
-                    let right = left + width + PAGE_PAD;
+                    let (x, rect_width) = symmetric_crop(left, width);
                     config.setRect(CGRect::new(
                         CGPoint::new(x, 0.0),
-                        CGSize::new(right - x, height),
+                        CGSize::new(rect_width, height),
                     ));
                     config
                 })
@@ -92,6 +101,25 @@ fn wait_for_print(
             Err(RecvTimeoutError::Disconnected) => {
                 return Err(AppError::Internal("生成 PDF 回调已中断".to_string()));
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn symmetric_crop_keeps_left_and_right_margins_equal() {
+        for (left, width) in [(0.0, 680.0), (20.0, 637.0), (50.0, 680.0), (160.0, 680.0)] {
+            let (x, rect_width) = symmetric_crop(left, width);
+            let left_margin = left - x;
+            let right_margin = (x + rect_width) - (left + width);
+            assert!(x >= 0.0);
+            assert!(
+                (left_margin - right_margin).abs() < 1e-6,
+                "left={left}, width={width} -> left_margin={left_margin}, right_margin={right_margin}"
+            );
         }
     }
 }
