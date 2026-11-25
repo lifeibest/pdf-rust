@@ -3,7 +3,8 @@
   "bundle": {
     "targets": ["nsis"],
     "resources": {
-      "binaries/pdfium.dll": "pdfium.dll"
+      "binaries/pdfium.dll": "pdfium.dll",
+      "binaries/heif/*.dll": "./"
     },
     "windows": {
       "webviewInstallMode": {

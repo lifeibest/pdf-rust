@@ -194,3 +194,40 @@ fn generated_pdf_can_be_rendered_back_to_image() {
     assert_eq!(width, 625);
     assert!((height as i32 - 313).abs() <= 2, "高: {height}");
 }
+
+#[cfg(target_os = "macos")]
+#[test]
+fn converts_heic_image_to_pdf_on_macos() {
+    let dir = tempfile::tempdir().expect("临时目录");
+    let dir = dir.path();
+
+    let png = write_png(dir, "sample.png", 320, 240, [40, 120, 220, 255]);
+    let heic = dir.join("sample.heic");
+    let status = std::process::Command::new("/usr/bin/sips")
+        .args(["-s", "format", "heic"])
+        .arg(&png)
+        .arg("--out")
+        .arg(&heic)
+        .status()
+        .expect("调用 sips 生成 HEIC 测试样本");
+    assert!(status.success(), "sips 生成 HEIC 失败");
+
+    let output = run(
+        dir,
+        ImagesToPdfOptions {
+            sources: vec![heic],
+            page_size: PageSizeOpt::Auto,
+            orientation: OrientationOpt::Auto,
+            image_fit: ImageFitMode::Fit,
+            margin_mm: 0.0,
+            image_dpi: 96,
+            output_name: Some("heic.pdf".to_string()),
+        },
+    );
+
+    assert_eq!(page_count(&output), 1, "HEIC 图片应生成 1 页 PDF");
+    let (width, height, _) = page_geometry(&output)[0];
+    // 320x240 @96dpi = 240x180pt
+    assert!((width - 240.0).abs() < 2.0, "宽: {width}");
+    assert!((height - 180.0).abs() < 2.0, "高: {height}");
+}

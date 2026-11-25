@@ -13,7 +13,9 @@ use crate::error::AppError;
 use crate::pdf::types::ImageFitMode;
 
 /// 支持作为输入的图片扩展名（小写，不含点）。
-pub const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "webp", "bmp", "gif", "tif", "tiff"];
+pub const IMAGE_EXTENSIONS: &[&str] = &[
+    "png", "jpg", "jpeg", "webp", "bmp", "gif", "tif", "tiff", "heic", "heif",
+];
 
 /// 每英寸点数，PDF 规范固定为 72。
 pub const POINTS_PER_INCH: f32 = 72.0;
@@ -35,10 +37,15 @@ pub fn is_image(path: &Path) -> bool {
     IMAGE_EXTENSIONS.contains(&extension_of(path).as_str())
 }
 
-/// 读取图片。GIF 取第一帧，其余格式由 `image` crate 自动识别。
+/// 读取图片。HEIC/HEIF 走平台解码器（macOS 系统 sips / Windows 动态 libheif），
+/// GIF 取第一帧，其余格式由 `image` crate 自动识别。
 pub fn load_image(path: &Path) -> Result<DynamicImage, AppError> {
     if !path.exists() {
         return Err(AppError::Io(format!("图片不存在：{}", path.display())));
+    }
+
+    if crate::pdf::heic::is_heic(path) {
+        return crate::pdf::heic::decode(path);
     }
 
     image::open(path)
@@ -195,6 +202,8 @@ mod tests {
         assert!(!is_pdf(Path::new("/tmp/a.png")));
         assert!(is_image(Path::new("/tmp/a.JPG")));
         assert!(is_image(Path::new("/tmp/a.tiff")));
+        assert!(is_image(Path::new("/tmp/IMG_0001.HEIC")));
+        assert!(is_image(Path::new("/tmp/photo.heif")));
         assert!(!is_image(Path::new("/tmp/a.pdf")));
     }
 

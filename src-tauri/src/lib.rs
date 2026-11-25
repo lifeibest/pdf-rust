@@ -51,6 +51,8 @@ pub fn run() {
                 .map(|dir| vec![dir])
                 .unwrap_or_default();
 
+            pdf::heic::init_extra_dirs(&extra_dirs);
+
             // 初始化失败不退出进程：前端「关于 / 首页」会读取 pdfium_status 并给出
             // 可操作的安装指引，而不是让用户面对一个白屏窗口。
             match pdf::engine::init(&extra_dirs) {

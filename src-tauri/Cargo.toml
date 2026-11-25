@@ -63,6 +63,8 @@ pdfium-render = { version = "0.9.5", features = [
 webview2-com = "0.39"
 # PCWSTR / Result 等 COM 基础类型，版本须与 webview2-com 已解析到的对齐
 windows = "0.62"
+# 运行时动态加载随包分发的 heif.dll（+ libde265.dll），实现 Windows HEIC/HEIF 离线解码
+libloading = "0.9"
 # macOS：从 PlatformWebview::inner() 的 WKWebView 指针调 createPDFWithConfiguration:completionHandler:。
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6"

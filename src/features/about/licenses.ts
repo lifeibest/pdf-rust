@@ -45,6 +45,20 @@ export const LICENSES: LicenseEntry[] = [
     url: "https://github.com/ajrcarey/pdfium-render",
     group: "engine",
   },
+  {
+    name: "libheif",
+    version: "1.x",
+    license: "LGPL-3.0",
+    url: "https://github.com/strukturag/libheif",
+    group: "engine",
+  },
+  {
+    name: "libde265",
+    version: "1.x",
+    license: "LGPL-3.0",
+    url: "https://github.com/strukturag/libde265",
+    group: "engine",
+  },
 
   {
     name: "Tauri",

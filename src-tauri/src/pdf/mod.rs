@@ -13,6 +13,7 @@ pub mod compress;
 pub mod engine;
 pub mod export_images;
 pub mod extract_images;
+pub mod heic;
 pub mod images_to_pdf;
 pub mod imaging;
 pub mod info;

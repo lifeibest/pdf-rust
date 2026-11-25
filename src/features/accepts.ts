@@ -16,6 +16,8 @@ export const IMAGE_EXTENSIONS = [
   "gif",
   "tif",
   "tiff",
+  "heic",
+  "heif",
 ] as const;
 
 export const PDF_AND_IMAGE_EXTENSIONS = [

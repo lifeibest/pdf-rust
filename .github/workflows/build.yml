@@ -65,6 +65,33 @@ jobs:
       - name: Download PDFium
         run: pnpm pdfium
 
+      # Windows 端通过 vcpkg 构建并缓存 libheif + libde265 动态库，供运行时离线解码 HEIC/HEIF
+      - name: Cache Windows libheif DLLs
+        id: cache-libheif
+        if: matrix.platform == 'windows-latest'
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/binaries/heif
+          key: win-x64-libheif-libde265-v1
+
+      - name: Prepare Windows libheif DLLs
+        if: matrix.platform == 'windows-latest' && steps.cache-libheif.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $vcpkg = Join-Path $env:VCPKG_INSTALLATION_ROOT 'vcpkg.exe'
+          & $vcpkg install 'libheif[core,libde265]:x64-windows'
+          $binDir = Join-Path $env:VCPKG_INSTALLATION_ROOT 'installed\x64-windows\bin'
+          $destDir = 'src-tauri\binaries\heif'
+          New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+          Copy-Item -Path (Join-Path $binDir '*.dll') -Destination $destDir -Force
+          Get-ChildItem -Path $destDir -Filter '*.dll'
+          if (-not (Test-Path (Join-Path $destDir 'heif.dll'))) {
+            throw 'Missing heif.dll after vcpkg install'
+          }
+          if (-not (Test-Path (Join-Path $destDir 'libde265.dll'))) {
+            throw 'Missing libde265.dll after vcpkg install'
+          }
+
       - name: Build app
         run: pnpm tauri build ${{ matrix.args }}
 
