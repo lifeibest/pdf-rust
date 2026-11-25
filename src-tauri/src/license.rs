@@ -250,14 +250,22 @@ fn detect_machine_code() -> Option<String> {
             .find(|line| line.contains("IOPlatformUUID"))
             .and_then(|line| line.split('"').nth(3).map(str::to_string))
     } else if cfg!(target_os = "windows") {
-        let out = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-Command",
-                "(Get-CimInstance -ClassName Win32_ComputerSystemProduct).UUID",
-            ])
-            .output()
-            .ok()?;
+        let mut cmd = Command::new("powershell");
+        cmd.args([
+            "-NoProfile",
+            "-Command",
+            "(Get-CimInstance -ClassName Win32_ComputerSystemProduct).UUID",
+        ]);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+            cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+        let out = cmd.output().ok()?;
+        if !out.status.success() {
+            return None;
+        }
         Some(String::from_utf8_lossy(&out.stdout).trim().to_string())
     } else {
         std::fs::read_to_string("/etc/machine-id")

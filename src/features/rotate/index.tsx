@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { RotateCcw, RotateCw, Trash2 } from "lucide-react";
-import type { ReactElement } from "react";
+import { useMemo, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DropZone } from "@/components/DropZone";
@@ -12,9 +12,10 @@ import { PageThumbGrid } from "@/components/PageThumbGrid";
 import { Section } from "@/components/Section";
 import { TaskProgress } from "@/components/TaskProgress";
 import type { FeaturePageProps } from "@/features/types";
-import { asBoolean, asString } from "@/features/types";
+import { asBoolean, asScope, asString } from "@/features/types";
 import { useFeatureController } from "@/hooks/useFeatureController";
 import { usePdfThumbs } from "@/hooks/usePdfThumbs";
+import { expandSpec } from "@/lib/pages";
 import { useSettings } from "@/store/settings";
 import { ROTATION_CHOICES } from "./meta";
 
@@ -33,6 +34,23 @@ export default function RotatePage({ feature }: FeaturePageProps): ReactElement 
 
   const degrees = Number.parseInt(asString(values, "degrees", "90"), 10) || 90;
   const inPlace = asBoolean(values, "inPlace", false);
+  const scope = asScope(values, "scope");
+
+  const activePages = useMemo(() => {
+    if (pageCount <= 0 || scope.kind === "all") return null;
+    if (scope.kind === "odd") {
+      const set = new Set<number>();
+      for (let p = 1; p <= pageCount; p += 2) set.add(p);
+      return set;
+    }
+    if (scope.kind === "even") {
+      const set = new Set<number>();
+      for (let p = 2; p <= pageCount; p += 2) set.add(p);
+      return set;
+    }
+    const result = expandSpec(scope.spec, pageCount);
+    return result.ok ? new Set(result.pages) : new Set<number>();
+  }, [pageCount, scope.kind, scope.spec]);
 
   const thumbs = usePdfThumbs(primary?.path ?? null, {
     password: primary?.password ?? null,
@@ -97,8 +115,8 @@ export default function RotatePage({ feature }: FeaturePageProps): ReactElement 
                 total={pageCount}
                 truncated={thumbs.truncated}
                 previewRotation={degrees}
+                activePages={activePages}
               />
-              <p className="mt-2 text-center text-[11px] text-ink-faint">{t("rotate.scopeNote")}</p>
             </Section>
           ) : null}
         </div>

@@ -5,11 +5,14 @@
 //! 落在配置目录 `usage.json`，跨日自动归零，全程离线。
 
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
 use crate::license::{LicenseStatus, FREE_DAILY_LIMIT};
+
+static USAGE_LOCK: Mutex<()> = Mutex::new(());
 
 /// 配置目录内的计数文件。
 fn usage_file(config_dir: &Path) -> PathBuf {
@@ -37,9 +40,17 @@ fn read_record(config_dir: &Path) -> UsageRecord {
 }
 
 fn write_record(config_dir: &Path, record: &UsageRecord) -> Result<(), AppError> {
-    std::fs::create_dir_all(config_dir)?;
+    if !config_dir.as_os_str().is_empty() {
+        std::fs::create_dir_all(config_dir)?;
+    }
     let json = serde_json::to_string_pretty(record)?;
-    std::fs::write(usage_file(config_dir), json)?;
+    let target = usage_file(config_dir);
+    let temp = config_dir.join(format!(".usage-{}.tmp", uuid::Uuid::new_v4().simple()));
+    std::fs::write(&temp, json)?;
+    if std::fs::rename(&temp, &target).is_err() {
+        let _ = std::fs::copy(&temp, &target);
+        let _ = std::fs::remove_file(&temp);
+    }
     Ok(())
 }
 
@@ -92,8 +103,23 @@ fn build(used: u32, limit: Option<u32>, licensed: bool) -> QuotaStatus {
     }
 }
 
-/// 任务入口门控：允许则记一次并返回快照，超额则返回 [`AppError::QuotaExceeded`]。
+/// 只读配额检查：超额时返回 [`AppError::QuotaExceeded`]，不扣减次数。
+/// 用于任务启动前拦截，真正扣减在任务成功完成后通过 [`consume`] 执行。
+pub fn check(config_dir: &Path, license: &LicenseStatus) -> Result<QuotaStatus, AppError> {
+    let _guard = USAGE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let record = read_record(config_dir);
+    let limit = daily_limit(license);
+    if let Some(limit) = limit
+        && record.count >= limit
+    {
+        return Err(AppError::QuotaExceeded);
+    }
+    Ok(build(record.count, limit, license.active))
+}
+
+/// 任务完成后记一次配额并返回最新快照；使用进程内锁保证并发安全。
 pub fn consume(config_dir: &Path, license: &LicenseStatus) -> Result<QuotaStatus, AppError> {
+    let _guard = USAGE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let mut record = read_record(config_dir);
     let limit = daily_limit(license);
 

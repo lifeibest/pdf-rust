@@ -108,7 +108,11 @@ pub fn run(
         let fallback = format!("{stem}_noblank.pdf");
         crate::pdf::resolve_output_path(out_dir, opts.output_name.as_deref(), &fallback)
     };
-    crate::pdf::save_document(&document, &out_path, Some(&opts.source))?;
+    if opts.in_place || crate::pdf::is_same_file(&opts.source, &out_path) {
+        crate::pdf::save_document_in_place(document, &out_path)?;
+    } else {
+        crate::pdf::save_document(&document, &out_path, Some(&opts.source))?;
+    }
 
     // 完成消息带上被删页码（1 基），过多时截断，避免任务中心文案过长
     let pages_label = blank
@@ -118,14 +122,12 @@ pub fn run(
         .collect::<Vec<_>>()
         .join(", ");
     let ellipsis = if blank.len() > 8 { "…" } else { "" };
-    progress(
-        total,
-        total,
-        &format!(
-            "已删除 {} 个空白页（第 {pages_label}{ellipsis} 页）",
-            blank.len()
-        ),
+    let summary = format!(
+        "已删除 {} 个空白页（第 {pages_label}{ellipsis} 页），剩余 {remaining} 页",
+        blank.len()
     );
+    progress(total, total, &summary);
+    ctx.set_summary(summary);
 
     Ok(vec![OutputFile::pdf(out_path, Some(remaining))?])
 }
@@ -135,6 +137,8 @@ fn is_blank_page(page: &PdfPage<'_>, threshold_pct: f32) -> Result<bool, AppErro
     let target_width = imaging::pixels_for_dpi(page.width().value, DETECT_DPI);
     let config = PdfRenderConfig::new()
         .set_target_width(target_width)
+        .set_maximum_width(2048)
+        .set_maximum_height(2048)
         .render_annotations(true);
     let image = page.render_with_config(&config)?.as_image()?;
     Ok(ink_ratio_percent(&image) < f64::from(threshold_pct))

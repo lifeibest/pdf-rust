@@ -42,29 +42,69 @@ use crate::error::AppError;
 ///
 /// 当目标路径与源文件为同一个文件时（例如原地旋转），先写入同目录的隐藏临时文件再
 /// 原子重命名，避免 PDFium 边读边写损坏源文件。
+/// 注：Windows 下若需原地覆盖，请改用 [`save_document_in_place`]，以便先释放 `PdfDocument`
+/// 持有的文件句柄再重命名。
 pub fn save_document(
     document: &PdfDocument,
     target: &Path,
     source: Option<&Path>,
 ) -> Result<(), AppError> {
-    if let Some(parent) = target.parent() {
+    if let Some(parent) = target.parent().filter(|p| !p.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)?;
     }
 
     let in_place = source.is_some_and(|src| is_same_file(src, target));
     if in_place {
-        let parent = target.parent().unwrap_or_else(|| Path::new("."));
+        let parent = target
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
         let temp = unique_temp_path(parent, "pdfzt", "pdf");
-        let result = document.save_to_file(&temp);
-        match result {
-            Ok(()) => std::fs::rename(&temp, target)?,
-            Err(err) => {
-                let _ = std::fs::remove_file(&temp);
-                return Err(err.into());
-            }
+        if let Err(err) = document.save_to_file(&temp) {
+            let _ = std::fs::remove_file(&temp);
+            return Err(err.into());
+        }
+        if let Err(err) = std::fs::rename(&temp, target) {
+            let _ = std::fs::remove_file(&temp);
+            return Err(err.into());
         }
     } else {
         document.save_to_file(target)?;
+    }
+
+    Ok(())
+}
+
+/// 原地保存文档：先写出到隐藏临时文件，再显式 `drop(document)` 释放文件句柄，最后原子替换目标文件。
+///
+/// 在 Windows 上，PDFium 打开源 PDF 时会持有文件锁，必须先释放 `PdfDocument` 才能重命名覆盖。
+pub fn save_document_in_place(document: PdfDocument<'_>, target: &Path) -> Result<(), AppError> {
+    if let Some(parent) = target.parent().filter(|p| !p.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)?;
+    }
+    let parent = target
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let temp = unique_temp_path(parent, "pdfzt", "pdf");
+    if let Err(err) = document.save_to_file(&temp) {
+        let _ = std::fs::remove_file(&temp);
+        return Err(err.into());
+    }
+    // 显式释放 PDFium 文档句柄，避免 Windows 下 rename 被文件锁拒绝
+    drop(document);
+
+    if let Err(err) = std::fs::rename(&temp, target) {
+        // Windows 上目标文件存在时 rename 可能失败，尝试覆盖后再兜底清理临时文件
+        #[cfg(windows)]
+        {
+            if std::fs::copy(&temp, target).is_ok() {
+                let _ = std::fs::remove_file(&temp);
+                return Ok(());
+            }
+        }
+        let _ = std::fs::remove_file(&temp);
+        return Err(err.into());
     }
 
     Ok(())

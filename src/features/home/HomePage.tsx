@@ -31,6 +31,7 @@ const ADVANTAGES = [
  */
 export default function HomePage(): ReactElement {
   const { t } = useTranslation();
+  const info = useApp((state) => state.info);
   const engineReady = useApp((state) => state.engineReady);
   const vip = useQuota((state) => state.license?.active ?? false);
   const tasks = useTasks((state) => state.tasks);
@@ -62,7 +63,7 @@ export default function HomePage(): ReactElement {
         </div>
       </header>
 
-      {!engineReady ? <Notice tone="warn">{t("home.engineWarning")}</Notice> : null}
+      {info !== null && !engineReady ? <Notice tone="warn">{t("home.engineWarning")}</Notice> : null}
 
       <div className="flex flex-col gap-6">
         {CATEGORIES.map((category) => {

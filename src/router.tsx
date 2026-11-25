@@ -34,7 +34,7 @@ export function AppRouter(): ReactElement {
             path={feature.route}
             element={
               <Suspense fallback={<PageFallback />}>
-                <FeatureRoute feature={feature} />
+                <FeatureRoute key={feature.id} feature={feature} />
               </Suspense>
             }
           />

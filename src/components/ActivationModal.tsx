@@ -1,5 +1,5 @@
 import { Sparkles, X } from "lucide-react";
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -20,10 +20,24 @@ export function ActivationModal(): ReactElement | null {
   const quota = useQuota((state) => state.quota);
   const closeModal = useQuota((state) => state.closeModal);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, closeModal]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-6"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) closeModal();
+      }}
+    >
       <div className="card flex w-full max-w-md flex-col gap-4 p-5">
         <div className="flex items-start gap-3">
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">

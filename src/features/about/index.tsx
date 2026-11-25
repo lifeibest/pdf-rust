@@ -152,7 +152,7 @@ export default function AboutPage(): ReactElement {
           <Section title={t("about.changelog")} collapsible defaultOpen={false}>
             <ul className="flex flex-col gap-3">
               {CHANGELOG.map((entry) => (
-                <li key={entry.date} className="flex items-baseline gap-3 text-xs">
+                <li key={entry.textKey} className="flex items-baseline gap-3 text-xs">
                   <span className="shrink-0 font-mono text-[11px] text-brand-600 dark:text-brand-400">
                     {entry.date}
                   </span>

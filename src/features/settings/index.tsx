@@ -57,9 +57,8 @@ export default function SettingsPage(): ReactElement {
   const flashTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    const timer = flashTimer.current;
     return () => {
-      if (timer !== null) window.clearTimeout(timer);
+      if (flashTimer.current !== null) window.clearTimeout(flashTimer.current);
     };
   }, []);
 
@@ -379,20 +378,42 @@ interface NumberInputProps {
   onChange(value: number): void;
 }
 
-/** 数字输入：清空时不回写，越界时夹到 `[min, max]`。 */
+/** 数字输入：允许自由清空与键入多位数，失焦时按 `[min, max]` 校验夹紧。 */
 function NumberInput({ value, min, max, step = 1, onChange }: NumberInputProps): ReactElement {
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
+  function commit(): void {
+    const raw = Number.parseFloat(draft);
+    if (!Number.isFinite(raw)) {
+      setDraft(String(value));
+      return;
+    }
+    const clamped = Math.min(max, Math.max(min, Math.round(raw)));
+    setDraft(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  }
+
   return (
     <input
       type="number"
       className="field w-32 text-xs tabular-nums"
-      value={value}
+      value={draft}
       min={min}
       max={max}
       step={step}
       onChange={(event) => {
-        const raw = Number.parseFloat(event.target.value);
-        if (Number.isFinite(raw)) onChange(Math.min(max, Math.max(min, Math.round(raw))));
+        const text = event.target.value;
+        setDraft(text);
+        const raw = Number.parseFloat(text);
+        if (Number.isFinite(raw) && raw >= min && raw <= max) {
+          onChange(Math.round(raw));
+        }
       }}
+      onBlur={commit}
     />
   );
 }

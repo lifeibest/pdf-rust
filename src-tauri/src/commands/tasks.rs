@@ -110,9 +110,13 @@ pub async fn run_task(
     password: Option<String>,
     notify: Option<bool>,
 ) -> Result<TaskRecord, AppError> {
-    // 配额门控：未激活每日免费 N 次，超额直接返回 QuotaExceeded（前端弹激活引导）。
-    // 放在创建任务记录之前，避免任务中心出现无意义的失败条目。
-    crate::commands::license::gate(&app)?;
+    // 配额预检：未激活每日免费 N 次，超额直接返回 QuotaExceeded；真正扣次在成功完成后执行。
+    crate::commands::license::check_quota(&app)?;
+
+    // 先解析缓存与输出目录，避免目录异常时留下永远「进行中」的任务记录
+    let cache_dir = crate::commands::pdf::cache_dir(&app)?;
+    let output_dir = resolve_output_dir(&app, out_dir.as_deref())?;
+    let should_notify = notify.unwrap_or(true);
 
     let feature = request.feature_id();
     let label = request.feature_label();
@@ -122,10 +126,6 @@ pub async fn run_task(
     let cancel = state.start_task(&task_id, feature);
     // 立即回写一次「已启动」，让任务抽屉里能马上看到条目
     state.set_progress(&task_id, 0, 0, "任务已启动");
-
-    let cache_dir = crate::commands::pdf::cache_dir(&app)?;
-    let output_dir = resolve_output_dir(&app, out_dir.as_deref())?;
-    let should_notify = notify.unwrap_or(true);
 
     // 闭包需要拥有自己的句柄与 id，主线程还要在 spawn 失败分支里继续使用原件
     let worker = app.clone();
@@ -213,6 +213,7 @@ fn dispatch(
 }
 
 /// 写入终态记录并广播 `task:finished` / `task:failed`。
+#[allow(clippy::too_many_arguments)]
 fn finalize(
     app: &AppHandle,
     task_id: &str,
@@ -227,6 +228,7 @@ fn finalize(
 
     match outputs {
         Ok(files) => {
+            crate::commands::license::record_quota_use(app);
             let record = state
                 .finish_task(task_id, files.clone(), elapsed_ms, summary.clone())
                 .ok_or_else(|| AppError::Internal("任务记录已丢失".to_string()))?;
@@ -346,24 +348,30 @@ pub async fn clear_temp(app: AppHandle) -> Result<CleanupReport, AppError> {
     tauri::async_runtime::spawn_blocking(move || {
         let thumb_bytes = thumbnails::clear_cache(&cache_dir).unwrap_or(0);
 
-        // 任务被强杀时可能残留 `.split-<uuid>` / `.export-<uuid>` 隐藏目录
+        // 任务被强杀时可能残留 `.split-<uuid>` / `.export-<uuid>` 隐藏目录或 `.wechat-*.pdf` 隐藏文件
         let mut temp_dirs = 0usize;
         let mut temp_bytes = 0u64;
         if let Ok(entries) = std::fs::read_dir(&cache_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                let is_temp_dir = path.is_dir()
-                    && path
-                        .file_name()
-                        .map(|name| name.to_string_lossy().starts_with('.'))
-                        .unwrap_or(false);
-                if !is_temp_dir {
+                let is_hidden = path
+                    .file_name()
+                    .map(|name| name.to_string_lossy().starts_with('.'))
+                    .unwrap_or(false);
+                if !is_hidden {
                     continue;
                 }
 
-                temp_bytes += directory_size(&path);
-                if std::fs::remove_dir_all(&path).is_ok() {
-                    temp_dirs += 1;
+                if path.is_dir() {
+                    temp_bytes += directory_size(&path);
+                    if std::fs::remove_dir_all(&path).is_ok() {
+                        temp_dirs += 1;
+                    }
+                } else if path.is_file() {
+                    temp_bytes += std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+                    if std::fs::remove_file(&path).is_ok() {
+                        temp_dirs += 1;
+                    }
                 }
             }
         }

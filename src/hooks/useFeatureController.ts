@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { validateScope } from "@/lib/pages";
-import { useSettings } from "@/store/settings";
+import { useSettings, type Settings } from "@/store/settings";
 import { usePendingDrop } from "./useDropFiles";
 import { useSourceFiles, type SourceFilesApi } from "./useSourceFiles";
 import { useOutputPicker, type OutputPickerApi } from "./useOutputPicker";
@@ -52,17 +52,28 @@ export function useFeatureController(feature: FeatureDefinition): FeatureControl
   const source = useSourceFiles(feature);
   const output = useOutputPicker({ enabled: feature.needsOutputDir });
   const runner = useTaskRunner(feature.id);
-  const notifyOnFinish = useSettings((state) => state.settings.notifyOnFinish);
+  const settingsReady = useSettings((state) => state.ready);
+  const settings = useSettings((state) => state.settings);
+  const notifyOnFinish = settings.notifyOnFinish;
 
-  const [values, setValues] = useState<OptionValues>(() => defaultValues(feature.options));
+  const [values, setValues] = useState<OptionValues>(() =>
+    applyImageDefaults(defaultValues(feature.options), feature, settings),
+  );
+  const defaultsApplied = useRef(settingsReady);
+
+  useEffect(() => {
+    if (!settingsReady || defaultsApplied.current) return;
+    defaultsApplied.current = true;
+    setValues(applyImageDefaults(defaultValues(feature.options), feature, settings));
+  }, [feature, settings, settingsReady]);
 
   const setValue = useCallback((key: string, value: OptionValues[string]) => {
     setValues((current) => ({ ...current, [key]: value }));
   }, []);
 
   const resetValues = useCallback(() => {
-    setValues(defaultValues(feature.options));
-  }, [feature.options]);
+    setValues(applyImageDefaults(defaultValues(feature.options), feature, settings));
+  }, [feature, settings]);
 
   // 全局拖拽命中本功能时，把路径补进来源列表
   usePendingDrop(feature.id, source.add);
@@ -150,4 +161,21 @@ export function useFeatureController(feature: FeatureDefinition): FeatureControl
     run,
     runAnother,
   };
+}
+
+/** 把「设置」里的图片默认值同步到相关功能的初始选项中。 */
+function applyImageDefaults(
+  base: OptionValues,
+  feature: FeatureDefinition,
+  settings: Settings,
+): OptionValues {
+  const next = { ...base };
+  if (feature.id === "pdf2img") {
+    if ("format" in next) next.format = settings.imageFormat;
+    if ("dpi" in next) next.dpi = settings.imageDpi;
+    if ("quality" in next) next.quality = settings.imageQuality;
+  } else if (feature.id === "extractimg") {
+    if ("quality" in next) next.quality = settings.imageQuality;
+  }
+  return next;
 }

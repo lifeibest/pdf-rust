@@ -22,7 +22,7 @@ use std::sync::mpsc;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use tauri::{AppHandle, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 use crate::error::AppError;
 use crate::pdf::{info, resolve_output_path, unique_temp_path, CancelToken, OutputFile};
@@ -69,21 +69,45 @@ pub struct WechatExportOptions {
     pub manual: bool,
 }
 
-/// 校验并归一化文章 URL，拒绝非微信域名。
+/// 从输入文本（支持直接粘贴微信分享文案）中提取并校验公众号文章 URL。
+/// 自动将 `http://mp.weixin.qq.com/...` 升级为 `https://`。
 fn validate_url(raw: &str) -> Result<String, AppError> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return Err(AppError::invalid("请输入微信公众号文章链接"));
     }
-    let url = trimmed
+
+    // 兼容从微信直接复制的分享文本（如「文章标题 https://mp.weixin.qq.com/s/...」）
+    let candidate = extract_wechat_url(trimmed).unwrap_or(trimmed);
+    let mut url = candidate
         .parse::<tauri::Url>()
         .map_err(|_| AppError::invalid("链接格式不合法"))?;
-    if url.scheme() != "https"
+
+    if !matches!(url.scheme(), "https" | "http")
         || url.host_str().unwrap_or_default() != "mp.weixin.qq.com"
     {
-        return Err(AppError::invalid("仅支持微信公众号文章链接（mp.weixin.qq.com）"));
+        return Err(AppError::invalid(
+            "仅支持微信公众号文章链接（mp.weixin.qq.com）",
+        ));
     }
-    Ok(trimmed.to_string())
+
+    if url.scheme() == "http" {
+        let _ = url.set_scheme("https");
+    }
+
+    Ok(url.to_string())
+}
+
+/// 在任意文本中查找首个 `http(s)://mp.weixin.qq.com...` 链接。
+fn extract_wechat_url(text: &str) -> Option<&str> {
+    let start = text
+        .find("https://mp.weixin.qq.com")
+        .or_else(|| text.find("http://mp.weixin.qq.com"))?;
+    let rest = &text[start..];
+    let end = rest
+        .find(|c: char| c.is_whitespace() || matches!(c, '"' | '\'' | '<' | '>' | '」' | '】' | '）' | ')'))
+        .unwrap_or(rest.len());
+    Some(&rest[..end])
 }
 
 /// 默认输出名：`wechat_<yyyyMMdd_HHmmss>.pdf`（读取远程 `<title>` 需额外通道，成本高，v1 用时间戳）。
@@ -212,13 +236,21 @@ fn check_cancel(cancel: &CancelToken) -> Result<(), AppError> {
     }
 }
 
-/// 手动模式：轮询等待用户点击「继续导出」（置位 `confirm`），或取消 / 超时退出。
-fn wait_manual_confirm(cancel: &CancelToken, confirm: &ConfirmFlag) -> Result<(), AppError> {
+/// 手动模式：轮询等待用户点击「继续导出」（置位 `confirm`），或取消 / 关闭窗口 / 超时退出。
+fn wait_manual_confirm(
+    app: &AppHandle,
+    label: &str,
+    cancel: &CancelToken,
+    confirm: &ConfirmFlag,
+) -> Result<(), AppError> {
     let deadline = Instant::now() + MANUAL_DEADLINE;
     while Instant::now() < deadline {
         check_cancel(cancel)?;
         if confirm.load(Ordering::SeqCst) {
             return Ok(());
+        }
+        if app.get_webview_window(label).is_none() {
+            return Err(AppError::Cancelled);
         }
         sleep(POLL_INTERVAL);
     }
@@ -331,8 +363,9 @@ pub fn run(
     progress(0, 0, "正在打开文章页面");
     let external = WebviewUrl::External(url.parse().map_err(|_| AppError::invalid("链接格式不合法"))?);
     let builder = WebviewWindowBuilder::new(app, &label, external)
+        .title("微信文章预览（加载完成后请点击「继续导出」）")
         .inner_size(CONTENT_WIDTH, CONTENT_HEIGHT)
-        .decorations(false)
+        .decorations(opts.manual)
         .focused(opts.manual);
     let window = if opts.manual {
         builder.visible(true).center().build()
@@ -341,13 +374,18 @@ pub fn run(
     }
     .map_err(|err| AppError::Internal(format!("无法创建文章窗口：{err}")))?;
 
-    let result = export_in_window(&window, &cache_dir, out_dir, opts, cancel, confirm, progress);
+    let result = export_in_window(
+        app, &label, &window, &cache_dir, out_dir, opts, cancel, confirm, progress,
+    );
 
     let _ = window.close();
     result
 }
 
+#[allow(clippy::too_many_arguments)]
 fn export_in_window(
+    app: &AppHandle,
+    label: &str,
     window: &WebviewWindow,
     cache_dir: &Path,
     out_dir: &Path,
@@ -356,12 +394,21 @@ fn export_in_window(
     confirm: &ConfirmFlag,
     progress: &mut dyn FnMut(usize, usize, &str),
 ) -> Result<Vec<OutputFile>, AppError> {
+    struct TempFileGuard(PathBuf);
+    impl Drop for TempFileGuard {
+        fn drop(&mut self) {
+            if self.0.exists() {
+                let _ = std::fs::remove_file(&self.0);
+            }
+        }
+    }
+
     check_cancel(cancel)?;
 
     // 手动模式：先把窗口交给用户，直到其确认页面已就绪再继续。
     if opts.manual {
         progress(0, 0, "请在打开的窗口中完成验证或等待加载，然后点「继续导出」");
-        wait_manual_confirm(cancel, confirm)?;
+        wait_manual_confirm(app, label, cancel, confirm)?;
     }
 
     wait_document_ready(window, cancel)?;
@@ -379,6 +426,7 @@ fn export_in_window(
 
     progress(0, 0, "正在生成 PDF");
     let temp_pdf: PathBuf = unique_temp_path(cache_dir, "wechat", "pdf");
+    let _temp_guard = TempFileGuard(temp_pdf.clone());
     platform_print(window, &temp_pdf, cancel, size)?;
 
     if !temp_pdf.exists() {
@@ -407,7 +455,15 @@ mod tests {
         assert!(validate_url("").is_err());
         assert!(validate_url("not a url").is_err());
         assert!(validate_url("https://example.com/s/abc").is_err());
-        assert!(validate_url("http://mp.weixin.qq.com/s/abc").is_err());
+        // http 链接与分享文案会自动规范化为 https 链接
+        assert_eq!(
+            validate_url("http://mp.weixin.qq.com/s/abc").unwrap(),
+            "https://mp.weixin.qq.com/s/abc"
+        );
+        assert_eq!(
+            validate_url("一篇好文章 https://mp.weixin.qq.com/s/xyz123 快来看看").unwrap(),
+            "https://mp.weixin.qq.com/s/xyz123"
+        );
     }
 
     #[test]

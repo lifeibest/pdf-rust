@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
+import { useEffect, type ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
-import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useDrop } from "@/store/drop";
@@ -19,6 +19,15 @@ export function FeatureChooser(): ReactElement | null {
   const closeChooser = useDrop((state) => state.closeChooser);
   const setPending = useDrop((state) => state.setPending);
 
+  useEffect(() => {
+    if (!chooser) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeChooser();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [chooser, closeChooser]);
+
   if (!chooser) return null;
 
   const choose = (feature: FeatureId, route: string) => {
@@ -28,7 +37,12 @@ export function FeatureChooser(): ReactElement | null {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) closeChooser();
+      }}
+    >
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-line bg-surface shadow-panel animate-slide-up">
         <header className="flex items-center gap-2 border-b border-line px-4 py-3">
           <h2 className="flex-1 text-sm font-semibold text-ink">{t("home.droppedPickFeature")}</h2>
@@ -43,7 +57,7 @@ export function FeatureChooser(): ReactElement | null {
           </button>
         </header>
 
-        <ul className="flex flex-col gap-1 p-3">
+        <ul className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto p-3">
           {chooser.candidates.map((feature) => {
             const Icon = feature.icon;
             return (

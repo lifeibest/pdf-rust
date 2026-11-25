@@ -17,47 +17,65 @@ export function OutputList({ outputs, dense = false }: OutputListProps): ReactEl
   if (outputs.length === 0) return null;
 
   return (
-    <ul className="flex flex-col gap-1.5">
-      {outputs.map((output) => (
-        <li
-          key={output.path}
-          className="flex items-center gap-2 rounded-xl border border-line bg-surface-subtle px-3 py-2"
+    <div className="flex flex-col gap-2">
+      {!dense && outputs.length > 1 ? (
+        <button
+          type="button"
+          className="btn-ghost h-8 w-full justify-center py-0 text-xs"
+          onClick={() => void reveal(outputs[0].path).catch(() => {})}
         >
-          <KindIcon kind={output.kind} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-ink" title={output.path}>
-              {output.name}
-            </p>
-            {!dense ? (
-              <p className="text-[11px] text-ink-faint">
-                {formatBytes(output.sizeBytes)}
-                {output.pages ? ` · ${t("common.pageCount", { value: output.pages })}` : ""}
-              </p>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            className="btn-quiet h-7 w-7 rounded-lg px-0 py-0"
-            onClick={() => void openPath(output.path)}
-            title={t("common.open")}
-            aria-label={t("common.open")}
+          <FolderSearch size={14} />
+          {t("common.openDir")}（{outputs.length} {t("common.items")}）
+        </button>
+      ) : null}
+      <ul
+        className={
+          !dense && outputs.length > 4
+            ? "flex max-h-60 flex-col gap-1.5 overflow-y-auto pr-0.5"
+            : "flex flex-col gap-1.5"
+        }
+      >
+        {outputs.map((output) => (
+          <li
+            key={output.path}
+            className="flex items-center gap-2 rounded-xl border border-line bg-surface-subtle px-3 py-2"
           >
-            <ExternalLink size={14} />
-          </button>
-          {!dense ? (
+            <KindIcon kind={output.kind} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-ink" title={output.path}>
+                {output.name}
+              </p>
+              {!dense ? (
+                <p className="text-[11px] text-ink-faint">
+                  {formatBytes(output.sizeBytes)}
+                  {output.pages ? ` · ${t("common.pageCount", { value: output.pages })}` : ""}
+                </p>
+              ) : null}
+            </div>
             <button
               type="button"
               className="btn-quiet h-7 w-7 rounded-lg px-0 py-0"
-              onClick={() => void reveal(output.path)}
-              title={t("common.openDir")}
-              aria-label={t("common.openDir")}
+              onClick={() => void openPath(output.path).catch(() => {})}
+              title={t("common.open")}
+              aria-label={t("common.open")}
             >
-              <FolderSearch size={14} />
+              <ExternalLink size={14} />
             </button>
-          ) : null}
-        </li>
-      ))}
-    </ul>
+            {!dense ? (
+              <button
+                type="button"
+                className="btn-quiet h-7 w-7 rounded-lg px-0 py-0"
+                onClick={() => void reveal(output.path).catch(() => {})}
+                title={t("common.openDir")}
+                aria-label={t("common.openDir")}
+              >
+                <FolderSearch size={14} />
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

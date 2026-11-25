@@ -427,8 +427,10 @@ mod windows_libheif {
         let mut stride: c_int = 0;
         let plane =
             unsafe { (lib.image_get_plane_readonly)(img.ptr, HEIF_CHANNEL_INTERLEAVED, &mut stride) };
-        let row_bytes = (width as usize) * 4;
-        if plane.is_null() || stride < row_bytes as c_int {
+        let row_bytes = (width as usize)
+            .checked_mul(4)
+            .ok_or_else(|| AppError::Image(format!("HEIC 图像宽度溢出: {}", path.display())))?;
+        if plane.is_null() || stride <= 0 || (stride as usize) < row_bytes {
             return Err(AppError::Image(format!(
                 "HEIC 图像平面数据无效 (stride={stride}): {}",
                 path.display()

@@ -1,10 +1,10 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 
 import { extname } from "@/lib/paths";
-import { ACCEPTED_EXTENSIONS, matchFeatures } from "@/features/registry";
+import { ACCEPTED_EXTENSIONS, FEATURES, matchFeatures } from "@/features/registry";
 import { useDrop } from "@/store/drop";
 import type { FeatureId } from "@/features/types";
 
@@ -12,13 +12,17 @@ import type { FeatureId } from "@/features/types";
  * 全局窗口拖拽。
  *
  * Tauri 的 `dragDropEnabled` 会拦下 WebView 的 HTML5 拖放事件，因此这里统一
- * 走原生 `onDragDropEvent`：在任意页面拖入文件都能按扩展名匹配功能，
- * 命中唯一功能则直接跳转，多个命中时弹出选择器。
+ * 走原生 `onDragDropEvent`：
+ * - 若当前已在某个功能页且拖入的文件与该功能兼容，直接加入当前页（不打断用户）；
+ * - 否则按扩展名匹配功能，命中唯一功能则直接跳转，多个命中时弹出选择器。
  *
- * 必须在 Router 内部调用（用到 `useNavigate`）。
+ * 必须在 Router 内部调用（用到 `useNavigate` / `useLocation`）。
  */
 export function useDropFiles(): void {
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathnameRef = useRef(location.pathname);
+  pathnameRef.current = location.pathname;
 
   useEffect(() => {
     let unlisten: UnlistenFn | null = null;
@@ -42,7 +46,7 @@ export function useDropFiles(): void {
         }
 
         useDrop.getState().end();
-        handleDrop(payload.paths, navigate);
+        handleDrop(payload.paths, pathnameRef.current, navigate);
       })
       .catch(() => null);
 
@@ -60,7 +64,21 @@ export function useDropFiles(): void {
   }, [navigate]);
 }
 
-function handleDrop(paths: string[], navigate: (to: string) => void): void {
+function handleDrop(
+  paths: string[],
+  currentPath: string,
+  navigate: (to: string) => void,
+): void {
+  // 若用户已在某个具体功能页，且拖入文件与该功能兼容，直接塞进当前页（不弹全局选择器）
+  const active = FEATURES.find((feature) => feature.route === currentPath);
+  if (active && active.accepts.ext.length > 0) {
+    const matchedForActive = paths.filter((path) => active.accepts.ext.includes(extname(path)));
+    if (matchedForActive.length > 0) {
+      useDrop.getState().setPending({ feature: active.id, paths });
+      return;
+    }
+  }
+
   const kept = paths.filter((path) => ACCEPTED_EXTENSIONS.includes(extname(path)));
   if (kept.length === 0) return;
 

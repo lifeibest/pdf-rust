@@ -51,12 +51,21 @@ pub fn quota_status(app: AppHandle) -> QuotaStatus {
     usage::quota_status(&dir, &license)
 }
 
-/// 供 run_task 门控复用：消耗一次配额，超额返回 QuotaExceeded。
-pub fn gate(app: &AppHandle) -> Result<(), AppError> {
+/// 供 run_task / export_wechat_pdf 启动前检查配额（只读不扣次），超额返回 QuotaExceeded。
+pub fn check_quota(app: &AppHandle) -> Result<(), AppError> {
     let dir = config_dir_or_empty(app);
     let license = license::status(&dir);
-    usage::consume(&dir, &license)?;
+    usage::check(&dir, &license)?;
     Ok(())
+}
+
+/// 任务成功完成后扣减一次配额（失败/取消/输错密码不消耗免费次数）。
+pub fn record_quota_use(app: &AppHandle) {
+    let dir = config_dir_or_empty(app);
+    let license = license::status(&dir);
+    if let Err(err) = usage::consume(&dir, &license) {
+        log::debug!("记录配额使用跳过或失败: {}", err.brief());
+    }
 }
 
 /* ---------------------------------------------------------------- 设备指纹 */

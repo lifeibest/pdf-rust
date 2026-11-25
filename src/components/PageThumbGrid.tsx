@@ -19,6 +19,8 @@ export interface PageThumbGridProps {
    * 因此旋转功能可以所见即所得地预览结果。
    */
   previewRotation?: number;
+  /** 若提供，则仅对集合内的 1-based 页码应用预览旋转，其余页弱化显示 */
+  activePages?: Set<number> | null;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export function PageThumbGrid({
   total = 0,
   truncated = false,
   previewRotation = 0,
+  activePages = null,
   className,
 }: PageThumbGridProps): ReactElement | null {
   const { t } = useTranslation();
@@ -57,31 +60,38 @@ export function PageThumbGrid({
   return (
     <div className={clsx("flex flex-col gap-2", className)}>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-6">
-        {thumbs.map((thumb) => (
-          <figure
-            key={thumb.index}
-            className="relative overflow-hidden rounded-xl border border-line bg-surface-subtle"
-            title={t("thumb.pageOf", { page: thumb.page, total })}
-          >
-            <div className="flex aspect-[3/4] items-center justify-center p-1">
-              <img
-                src={thumb.url}
-                alt={t("thumb.pageOf", { page: thumb.page, total })}
-                loading="lazy"
-                draggable={false}
-                className="max-h-full max-w-full object-contain shadow-sm transition-transform duration-200"
-                style={
-                  previewRotation !== 0
-                    ? { transform: `rotate(${previewRotation}deg) scale(0.88)` }
-                    : undefined
-                }
-              />
-            </div>
-            <span className="absolute left-1 top-1 rounded-md bg-black/45 px-1 text-[10px] font-medium text-white">
-              {thumb.page}
-            </span>
-          </figure>
-        ))}
+        {thumbs.map((thumb) => {
+          const isAffected = activePages === null || activePages.has(thumb.page);
+          const angle = isAffected ? previewRotation : 0;
+          return (
+            <figure
+              key={thumb.index}
+              className={clsx(
+                "relative overflow-hidden rounded-xl border border-line bg-surface-subtle transition-opacity duration-150",
+                !isAffected && "opacity-40",
+              )}
+              title={t("thumb.pageOf", { page: thumb.page, total })}
+            >
+              <div className="flex aspect-[3/4] items-center justify-center p-1">
+                <img
+                  src={thumb.url}
+                  alt={t("thumb.pageOf", { page: thumb.page, total })}
+                  loading="lazy"
+                  draggable={false}
+                  className="max-h-full max-w-full object-contain shadow-sm transition-transform duration-200"
+                  style={
+                    angle !== 0
+                      ? { transform: `rotate(${angle}deg) scale(0.88)` }
+                      : undefined
+                  }
+                />
+              </div>
+              <span className="absolute left-1 top-1 rounded-md bg-black/45 px-1 text-[10px] font-medium text-white">
+                {thumb.page}
+              </span>
+            </figure>
+          );
+        })}
       </div>
 
       {truncated ? (

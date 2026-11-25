@@ -9,8 +9,14 @@ import type {
   OptionValues,
   SourceFile,
 } from "@/features/types";
-import { asBoolean, asNumber } from "@/features/types";
+import { asBoolean, asString } from "@/features/types";
 import type { TaskRequest } from "@/lib/tauri";
+
+const BLANK_PRESET_THRESHOLD: Record<string, number> = {
+  strict: 0.2,
+  standard: 0.5,
+  loose: 1.5,
+};
 
 function buildRequest(
   files: SourceFile[],
@@ -18,13 +24,15 @@ function buildRequest(
   context: BuildContext,
 ): TaskRequest {
   const inPlace = asBoolean(values, "inPlace", false);
+  const preset = asString(values, "blankPreset", "standard");
+  const threshold = BLANK_PRESET_THRESHOLD[preset] ?? 0.5;
 
   return {
     kind: "rmblank",
     options: {
       source: files[0]?.path ?? "",
       password: files[0]?.password ?? null,
-      threshold: asNumber(values, "threshold", 0.5),
+      threshold,
       inPlace,
       // 原地模式直接覆盖源文件，输出名没有意义
       outputName: inPlace ? null : context.outputName,
@@ -48,15 +56,27 @@ const rmblank: FeatureDefinition = {
   accepts: { ext: [...PDF_EXTENSIONS], multiple: false },
   options: fields(
     {
-      type: "number",
-      key: "threshold",
-      labelKey: "options.threshold",
-      hintKey: "options.thresholdHint",
-      min: 0.01,
-      max: 50,
-      step: 0.1,
-      default: 0.5,
-      unitKey: "options.unit.percent",
+      type: "segmented",
+      key: "blankPreset",
+      labelKey: "options.blankPreset",
+      default: "standard",
+      options: [
+        {
+          value: "strict",
+          labelKey: "options.blankPresetValue.strict",
+          hintKey: "options.blankPresetHint.strict",
+        },
+        {
+          value: "standard",
+          labelKey: "options.blankPresetValue.standard",
+          hintKey: "options.blankPresetHint.standard",
+        },
+        {
+          value: "loose",
+          labelKey: "options.blankPresetValue.loose",
+          hintKey: "options.blankPresetHint.loose",
+        },
+      ],
     },
     {
       type: "switch",

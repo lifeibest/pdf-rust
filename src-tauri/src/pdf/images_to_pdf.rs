@@ -2,6 +2,7 @@
 //!
 //! 同时被「图片转 PDF」功能与「合并」功能中的图片来源复用。
 
+use std::io::Cursor;
 use std::path::{Path, PathBuf};
 
 use pdfium_render::prelude::{
@@ -95,13 +96,23 @@ pub fn run(
 /// 向文档末尾追加一页，并把图片按选项排版到该页上。
 ///
 /// 供「图片转 PDF」与「合并」共用，因此 `document` 由调用方持有。
+/// 对无需旋转的标准 JPEG 直接内嵌原始 JPEG 字节流，避免解成位图再写回导致 PDF 体积暴涨 5~10 倍。
 pub fn append_image_page(
     document: &mut PdfDocument<'_>,
     image_path: &Path,
     opts: &ImagesToPdfOptions,
 ) -> Result<(), AppError> {
-    let image = imaging::load_image(image_path)?;
-    let (image_width, image_height) = (image.width(), image.height());
+    // 尝试 JPEG 零重编码直嵌（仅当扩展名为 jpg/jpeg 且 EXIF 方向为 1 时启用）
+    let raw_jpeg = try_load_passthrough_jpeg(image_path);
+
+    let (image_width, image_height, decoded_image) = match &raw_jpeg {
+        Some((_, w, h)) => (*w, *h, None),
+        None => {
+            let image = imaging::load_image(image_path)?;
+            let (w, h) = (image.width(), image.height());
+            (w, h, Some(image))
+        }
+    };
 
     let base = match opts.page_size {
         PageSizeOpt::Auto => {
@@ -128,18 +139,42 @@ pub fn append_image_page(
 
     let mut page = document.pages_mut().create_page_at_end(paper)?;
 
-    let mut object = PdfPageImageObject::new_with_size(
-        document,
-        &image,
-        PdfPoints::new(placement.width),
-        PdfPoints::new(placement.height),
-    )?;
+    let mut object = if let Some((jpeg_bytes, _, _)) = raw_jpeg {
+        let mut obj = PdfPageImageObject::new_from_jpeg_reader(document, Cursor::new(jpeg_bytes))?;
+        obj.scale(placement.width, placement.height)?;
+        obj
+    } else {
+        let image = decoded_image.expect("非直嵌分支一定已解码图片");
+        PdfPageImageObject::new_with_size(
+            document,
+            &image,
+            PdfPoints::new(placement.width),
+            PdfPoints::new(placement.height),
+        )?
+    };
 
     // 顺序很重要：先缩放，再平移。若先平移，平移量会被缩放一并放大。
     object.translate(PdfPoints::new(placement.x), PdfPoints::new(placement.y))?;
     page.objects_mut().add_image_object(object)?;
 
     Ok(())
+}
+
+/// 若文件是标准方向（EXIF orientation == 1）的 JPEG，返回 `(原始字节, 宽, 高)` 供直接内嵌。
+fn try_load_passthrough_jpeg(path: &Path) -> Option<(Vec<u8>, u32, u32)> {
+    if !matches!(imaging::extension_of(path).as_str(), "jpg" | "jpeg") {
+        return None;
+    }
+    let bytes = std::fs::read(path).ok()?;
+    if imaging::jpeg_exif_orientation(&bytes) != 1 {
+        return None;
+    }
+    let reader = image::ImageReader::with_format(Cursor::new(&bytes), image::ImageFormat::Jpeg);
+    let (w, h) = reader.into_dimensions().ok()?;
+    if w == 0 || h == 0 {
+        return None;
+    }
+    Some((bytes, w, h))
 }
 
 /// `auto` 页面尺寸：图片像素按 `dpi` 换算为点，再加上四边留白。

@@ -58,6 +58,8 @@ export function useTaskRunner(feature: FeatureId): TaskRunner {
   const [taskId, setTaskId] = useState<string | null>(null);
   /** 本次调用的时间下界，用于在 id 未知时定位记录 */
   const [since, setSince] = useState<number | null>(null);
+  /** 防止首个进度事件到达前双击触发重复提交 */
+  const [submitting, setSubmitting] = useState(false);
   /** `run_task` 在创建任务之前就失败（如输出目录不可写）时的本地错误 */
   const [localError, setLocalError] = useState<AppError | null>(null);
 
@@ -78,6 +80,7 @@ export function useTaskRunner(feature: FeatureId): TaskRunner {
     async (request: TaskRequest, options: StartOptions = {}) => {
       setLocalError(null);
       setTaskId(null);
+      setSubmitting(true);
       // 留 5 秒余量：前端时钟与后端记录的时间戳可能有细微偏差
       setSince(Date.now() - 5_000);
 
@@ -89,6 +92,7 @@ export function useTaskRunner(feature: FeatureId): TaskRunner {
           options.notify ?? null,
         );
         setTaskId(record.id);
+        void useQuota.getState().refresh();
         return record;
       } catch (error) {
         const normalized: AppError = isAppError(error)
@@ -102,6 +106,7 @@ export function useTaskRunner(feature: FeatureId): TaskRunner {
         return null;
       } finally {
         setSince(null);
+        setSubmitting(false);
       }
     },
     [],
@@ -122,9 +127,11 @@ export function useTaskRunner(feature: FeatureId): TaskRunner {
   const errorMessage = task?.error ?? localError?.message ?? null;
   const status: RunnerStatus = task
     ? task.status
-    : localError
-      ? "failed"
-      : "idle";
+    : submitting
+      ? "running"
+      : localError
+        ? "failed"
+        : "idle";
 
   return {
     task,

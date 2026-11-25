@@ -153,23 +153,33 @@ function FileRow({ file, index, sortable, onRemove, onPassword }: FileRowProps):
       </div>
 
       {locked && onPassword ? (
-        <div className="flex items-center gap-2 rounded-xl bg-surface-subtle px-3 py-2">
-          <Lock size={14} className="shrink-0 text-ink-faint" />
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder={t("common.passwordPlaceholder")}
-            className="field h-8 flex-1 py-1 text-xs"
-          />
-          <button
-            type="button"
-            className="btn-ghost h-8 px-3 py-0 text-xs"
-            disabled={password.length === 0}
-            onClick={() => void onPassword(file.id, password)}
-          >
-            {t("common.save")}
-          </button>
+        <div className="flex flex-col gap-1.5 rounded-xl bg-surface-subtle px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Lock size={14} className="shrink-0 text-ink-faint" />
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && password.length > 0) {
+                  void onPassword(file.id, password);
+                }
+              }}
+              placeholder={t("common.passwordPlaceholder")}
+              className="field h-8 flex-1 py-1 text-xs"
+            />
+            <button
+              type="button"
+              className="btn-ghost h-8 px-3 py-0 text-xs"
+              disabled={password.length === 0}
+              onClick={() => void onPassword(file.id, password)}
+            >
+              {t("common.save")}
+            </button>
+          </div>
+          {file.doc?.passwordFailed ? (
+            <p className="pl-5 text-[11px] text-rose-500">{t("common.passwordWrong")}</p>
+          ) : null}
         </div>
       ) : null}
     </li>

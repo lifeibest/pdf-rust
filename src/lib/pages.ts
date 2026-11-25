@@ -32,7 +32,7 @@ export function toPageScope(selection: ScopeSelection): PageScope {
     case "even":
       return "even";
     case "spec": {
-      const spec = selection.spec.trim();
+      const spec = normalizeSpecText(selection.spec);
       // 空表达式退化为全部页，避免后端直接报 Range 错误
       return spec.length === 0 ? "all" : { spec };
     }
@@ -52,9 +52,25 @@ export function scopeFromPageScope(scope: PageScope): ScopeSelection {
 /** 解析结果：成功时给出展开后的 1-based 页码（按输入顺序去重）。 */
 export type RangeResult = { ok: true; pages: number[] } | { ok: false; reason: string };
 
+/** 将中文标点（全角逗号、顿号、全角横杠/波浪号）归一化为标准英文符号，方便中文输入法直接输入。 */
+export function normalizeSpecText(spec: string): string {
+  return spec
+    .trim()
+    .replace(/[，、；;]/g, ",")
+    .replace(/[—–～~－]/g, "-")
+    .replace(/：/g, ":");
+}
+
+/** 严格解析正整数（拒绝 "1abc" 这类带尾随垃圾字符的输入）。 */
+function parseStrictInt(text: string): number {
+  const trimmed = text.trim();
+  if (!/^\d+$/.test(trimmed)) return Number.NaN;
+  return Number.parseInt(trimmed, 10);
+}
+
 /** 展开页码范围表达式；`total` 为文档总页数。 */
 export function expandSpec(spec: string, total: number): RangeResult {
-  const normalized = spec.trim();
+  const normalized = normalizeSpecText(spec);
   if (total <= 0) return { ok: false, reason: "emptyDocument" };
   if (normalized.length === 0) return { ok: false, reason: "empty" };
 
@@ -122,8 +138,8 @@ function expandToken(token: string, total: number): RangeResult {
 
   const dash = token.indexOf("-");
   if (dash > 0) {
-    const start = Number.parseInt(token.slice(0, dash).trim(), 10);
-    const end = Number.parseInt(token.slice(dash + 1).trim(), 10);
+    const start = parseStrictInt(token.slice(0, dash));
+    const end = parseStrictInt(token.slice(dash + 1));
     if (!Number.isInteger(start) || !Number.isInteger(end)) {
       return { ok: false, reason: "invalidNumber" };
     }
@@ -132,7 +148,7 @@ function expandToken(token: string, total: number): RangeResult {
     return { ok: true, pages: range(low, high) };
   }
 
-  const single = Number.parseInt(token, 10);
+  const single = parseStrictInt(token);
   if (!Number.isInteger(single)) return { ok: false, reason: "invalidNumber" };
   if (single < 1 || single > total) return { ok: false, reason: "outOfRange" };
   return { ok: true, pages: [single] };
@@ -143,7 +159,7 @@ function parsePrefixedCount(
   prefix: string,
 ): { ok: true; value: number } | { ok: false; reason: string } | null {
   if (!lower.startsWith(prefix)) return null;
-  const value = Number.parseInt(lower.slice(prefix.length).trim(), 10);
+  const value = parseStrictInt(lower.slice(prefix.length));
   if (!Number.isInteger(value) || value <= 0) {
     return { ok: false, reason: "invalidNumber" };
   }

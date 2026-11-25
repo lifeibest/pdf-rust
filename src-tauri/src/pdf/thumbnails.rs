@@ -63,10 +63,10 @@ pub fn render_thumbs(
         cleaned
     };
 
+    let max_px = max_px.clamp(32, 2048);
     let dir = cache_dir_for(cache_root, source, max_px);
     std::fs::create_dir_all(&dir)?;
 
-    let max_px = max_px.clamp(32, 2048);
     let mut results = Vec::with_capacity(targets.len());
 
     for index in targets {
@@ -86,9 +86,8 @@ pub fn render_thumbs(
             continue;
         }
 
-        // 依据「计入旋转后的」宽高比推导目标宽度，使缩略图长边不超过 max_px
-        let (width_pt, height_pt) =
-            oriented_size(page.width().value, page.height().value, rotation_deg);
+        // PDFium 的 page.width() / height() 已计入 /Rotate 后的可视尺寸，无需二次互换
+        let (width_pt, height_pt) = (page.width().value, page.height().value);
         let ratio = if height_pt > 0.0 {
             width_pt / height_pt
         } else {
@@ -102,6 +101,7 @@ pub fn render_thumbs(
 
         let config = PdfRenderConfig::new()
             .set_target_width(target_width.round() as i32)
+            .set_maximum_height(max_px as i32)
             .use_print_quality(true);
 
         let bitmap = page.render_with_config(&config)?;
@@ -161,7 +161,8 @@ pub fn render_image_thumb(
     }])
 }
 
-/// 计入 `/Rotate` 后的有效宽高。
+/// 计入 `/Rotate` 后的有效宽高（供单元测试保留）。
+#[cfg(test)]
 fn oriented_size(width_pt: f32, height_pt: f32, rotation_deg: u16) -> (f32, f32) {
     if rotation_deg == 90 || rotation_deg == 270 {
         (height_pt, width_pt)

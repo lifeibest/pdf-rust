@@ -40,7 +40,7 @@ export function OutputPicker({
                   <span className="truncate">{shortenPath(api.dir, 32)}</span>
                 </>
               ) : (
-                <span className="text-ink-faint">{t("common.defaultDir")}</span>
+                <span className="text-ink-faint">{t("common.askOnRun")}</span>
               )}
             </span>
             <button

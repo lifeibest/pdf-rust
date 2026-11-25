@@ -69,9 +69,12 @@ export function useOutputPicker(options: OutputPickerOptions = {}): OutputPicker
     if (!result || result.cancelled) return null;
     const [picked] = result.paths;
     if (!picked) return null;
-    setDir(picked);
+    // 「每次询问」模式下不把临时选中的目录锁进 dir，保证下次点击仍会询问
+    if (settings.outputMode !== "ask") {
+      setDir(picked);
+    }
     return picked;
-  }, [dir, enabled, t]);
+  }, [dir, enabled, settings.outputMode, t]);
 
   const commit = useCallback(
     (used: string | null) => {

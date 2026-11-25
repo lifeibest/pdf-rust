@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { assetUrl, renderThumbnails } from "@/lib/tauri";
 import { extname } from "@/lib/paths";
 import { useSettings } from "@/store/settings";
+import { PDF_AND_IMAGE_EXTENSIONS } from "@/features/accepts";
 import type { SourceFile } from "@/features/types";
 
 export interface FirstPageThumbs {
@@ -13,18 +14,8 @@ export interface FirstPageThumbs {
 
 const EMPTY: FirstPageThumbs = { urls: {}, loading: false };
 
-/** 可预览的扩展名：PDF 首页 + 各类图片，与后端 IMAGE_EXTENSIONS 保持一致。 */
-const PREVIEWABLE = new Set([
-  "pdf",
-  "png",
-  "jpg",
-  "jpeg",
-  "webp",
-  "bmp",
-  "gif",
-  "tif",
-  "tiff",
-]);
+/** 可预览的扩展名：PDF 首页 + 各类图片（含 HEIC/HEIF），直接复用 accepts.ts 避免漂移。 */
+const PREVIEWABLE = new Set(PDF_AND_IMAGE_EXTENSIONS);
 
 /**
  * 批量渲染多份来源的预览缩略图。

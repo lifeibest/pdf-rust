@@ -104,13 +104,17 @@ pub fn run(
 
     let stem = crate::pdf::file_stem(&opts.source);
     if opts.in_place {
-        crate::pdf::save_document(&document, &opts.source, Some(&opts.source))?;
+        crate::pdf::save_document_in_place(document, &opts.source)?;
         return Ok(vec![OutputFile::pdf(&opts.source, Some(total as u32))?]);
     }
 
     let fallback = format!("{stem}_rotated.pdf");
     let out_path = crate::pdf::resolve_output_path(out_dir, opts.output_name.as_deref(), &fallback);
-    crate::pdf::save_document(&document, &out_path, Some(&opts.source))?;
+    if crate::pdf::is_same_file(&opts.source, &out_path) {
+        crate::pdf::save_document_in_place(document, &out_path)?;
+    } else {
+        crate::pdf::save_document(&document, &out_path, Some(&opts.source))?;
+    }
 
     Ok(vec![OutputFile::pdf(out_path, Some(total as u32))?])
 }

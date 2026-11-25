@@ -38,7 +38,7 @@ pub fn is_image(path: &Path) -> bool {
 }
 
 /// 读取图片。HEIC/HEIF 走平台解码器（macOS 系统 sips / Windows 动态 libheif），
-/// GIF 取第一帧，其余格式由 `image` crate 自动识别。
+/// JPEG 自动按 EXIF Orientation 转正，GIF 取第一帧，其余格式由 `image` crate 自动识别。
 pub fn load_image(path: &Path) -> Result<DynamicImage, AppError> {
     if !path.exists() {
         return Err(AppError::Io(format!("图片不存在：{}", path.display())));
@@ -48,8 +48,144 @@ pub fn load_image(path: &Path) -> Result<DynamicImage, AppError> {
         return crate::pdf::heic::decode(path);
     }
 
-    image::open(path)
-        .map_err(|err| AppError::Image(format!("无法解码图片 {}: {err}", path.display())))
+    let img = image::open(path)
+        .map_err(|err| AppError::Image(format!("无法解码图片 {}: {err}", path.display())))?;
+
+    if matches!(extension_of(path).as_str(), "jpg" | "jpeg")
+        && let Ok(bytes) = std::fs::read(path)
+    {
+        let orientation = jpeg_exif_orientation(&bytes);
+        if orientation != 1 {
+            return Ok(apply_exif_orientation(img, orientation));
+        }
+    }
+
+    Ok(img)
+}
+
+/// 读取 JPEG 字节流中的 EXIF Orientation 标签（`1..=8`）；未找到或非 JPEG 返回 `1`。
+pub fn jpeg_exif_orientation(bytes: &[u8]) -> u16 {
+    if bytes.len() < 4 || bytes[0] != 0xFF || bytes[1] != 0xD8 {
+        return 1;
+    }
+
+    let mut pos = 2usize;
+    while pos + 4 <= bytes.len() {
+        if bytes[pos] != 0xFF {
+            break;
+        }
+        while pos < bytes.len() && bytes[pos] == 0xFF {
+            pos += 1;
+        }
+        if pos >= bytes.len() {
+            break;
+        }
+        let marker = bytes[pos];
+        pos += 1;
+        // SOS (0xDA) 或 EOI (0xD9) 后不再有元数据段
+        if marker == 0xDA || marker == 0xD9 {
+            break;
+        }
+        if pos + 2 > bytes.len() {
+            break;
+        }
+        let seg_len = u16::from_be_bytes([bytes[pos], bytes[pos + 1]]) as usize;
+        if seg_len < 2 || pos + seg_len > bytes.len() {
+            break;
+        }
+        let payload = &bytes[pos + 2..pos + seg_len];
+        if marker == 0xE1
+            && payload.starts_with(b"Exif\0\0")
+            && let Some(orientation) = parse_tiff_orientation(&payload[6..])
+        {
+            return orientation;
+        }
+        pos += seg_len;
+    }
+
+    1
+}
+
+fn parse_tiff_orientation(tiff: &[u8]) -> Option<u16> {
+    if tiff.len() < 8 {
+        return None;
+    }
+    let little = match &tiff[0..2] {
+        b"II" => true,
+        b"MM" => false,
+        _ => return None,
+    };
+    let read_u16 = |offset: usize| -> Option<u16> {
+        let slice = tiff.get(offset..offset + 2)?;
+        Some(if little {
+            u16::from_le_bytes([slice[0], slice[1]])
+        } else {
+            u16::from_be_bytes([slice[0], slice[1]])
+        })
+    };
+    let read_u32 = |offset: usize| -> Option<u32> {
+        let slice = tiff.get(offset..offset + 4)?;
+        Some(if little {
+            u32::from_le_bytes([slice[0], slice[1], slice[2], slice[3]])
+        } else {
+            u32::from_be_bytes([slice[0], slice[1], slice[2], slice[3]])
+        })
+    };
+
+    if read_u16(2)? != 0x002A {
+        return None;
+    }
+    let ifd0 = read_u32(4)? as usize;
+    let count = read_u16(ifd0)? as usize;
+    for i in 0..count {
+        let entry = ifd0.checked_add(2)?.checked_add(i.checked_mul(12)?)?;
+        let tag = read_u16(entry)?;
+        if tag == 0x0112 {
+            let value = read_u16(entry + 8)?;
+            if (1..=8).contains(&value) {
+                return Some(value);
+            }
+            return None;
+        }
+    }
+    None
+}
+
+fn apply_exif_orientation(img: DynamicImage, orientation: u16) -> DynamicImage {
+    match orientation {
+        2 => img.fliph(),
+        3 => img.rotate180(),
+        4 => img.flipv(),
+        5 => img.rotate90().fliph(),
+        6 => img.rotate90(),
+        7 => img.rotate270().fliph(),
+        8 => img.rotate270(),
+        _ => img,
+    }
+}
+
+/// 将任意图像铺在纯白底上转为 RGB8，避免带透明通道的 PNG 转 JPEG 时背景变黑。
+fn flatten_to_rgb_white(image: &DynamicImage) -> image::RgbImage {
+    let rgba = image.to_rgba8();
+    let (w, h) = rgba.dimensions();
+    let mut rgb = image::RgbImage::new(w, h);
+    for (x, y, pixel) in rgba.enumerate_pixels() {
+        let a = u16::from(pixel[3]);
+        if a == 255 {
+            rgb.put_pixel(x, y, image::Rgb([pixel[0], pixel[1], pixel[2]]));
+        } else if a == 0 {
+            rgb.put_pixel(x, y, image::Rgb([255, 255, 255]));
+        } else {
+            let inv = 255 - a;
+            let blend = |c: u8| -> u8 { ((u16::from(c) * a + 255 * inv) / 255) as u8 };
+            rgb.put_pixel(
+                x,
+                y,
+                image::Rgb([blend(pixel[0]), blend(pixel[1]), blend(pixel[2])]),
+            );
+        }
+    }
+    rgb
 }
 
 /// 按指定格式与质量写出图片。
@@ -64,7 +200,7 @@ pub fn encode_image(
 ) -> Result<(), AppError> {
     use crate::pdf::types::ImageFormatOpt;
 
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)?;
     }
 
@@ -73,8 +209,8 @@ pub fn encode_image(
             image.save_with_format(path, image::ImageFormat::Png)?;
         }
         ImageFormatOpt::Jpeg => {
-            // JPEG 不支持 alpha 通道，必须先转 RGB
-            let rgb = image.to_rgb8();
+            // JPEG 不支持 alpha 通道：先铺纯白底再转 RGB，避免透明背景变黑
+            let rgb = flatten_to_rgb_white(image);
             let file = std::io::BufWriter::new(std::fs::File::create(path)?);
             JpegEncoder::new_with_quality(file, quality.clamp(1, 100)).write_image(
                 rgb.as_raw(),

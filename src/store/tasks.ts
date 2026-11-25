@@ -3,6 +3,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import {
   cancelTask,
+  cancelWechatExport,
   clearTasks,
   EVENT,
   listTasks,
@@ -81,7 +82,12 @@ export const useTasks = create<TasksState>((set, get) => ({
   },
 
   async cancel(id) {
-    await cancelTask(id).catch(() => false);
+    const target = get().tasks.find((task) => task.id === id);
+    if (target?.feature === "wechat") {
+      await cancelWechatExport(id).catch(() => false);
+    } else {
+      await cancelTask(id).catch(() => false);
+    }
     // 后端随后会发 failed(cancelled) 事件，这里先本地置位让按钮立刻失去意义
     upsertTask(set, id, "", () => ({ status: "cancelled", message: "" }));
   },

@@ -11,6 +11,7 @@ import { Section } from "@/components/Section";
 import { TaskProgress } from "@/components/TaskProgress";
 import { ThumbStrip } from "@/components/ThumbStrip";
 import type { FeaturePageProps, SourceFile } from "@/features/types";
+import { isImageName } from "@/features/accepts";
 import { useFeatureController } from "@/hooks/useFeatureController";
 import { useFirstPageThumbs } from "@/hooks/useFirstPageThumbs";
 import { formatBytes } from "@/lib/format";
@@ -121,7 +122,11 @@ export default function MergePage({ feature }: FeaturePageProps): ReactElement {
             }
           >
             <OptionsForm
-              fields={feature.options}
+              fields={
+                source.files.some((file) => isImageName(file.name))
+                  ? feature.options
+                  : feature.options.filter((field) => field.key === "flattenAnnotations")
+              }
               values={values}
               onChange={setValue}
               disabled={runner.running}
@@ -146,9 +151,12 @@ export default function MergePage({ feature }: FeaturePageProps): ReactElement {
   );
 }
 
-/** 汇总来源列表：页数只统计已探测到的 PDF，体积始终可算。 */
+/** 汇总来源列表：PDF 取已探测页数，图片每张按 1 页计；体积始终可算。 */
 function summarize(files: SourceFile[]): { pages: number; size: string } {
-  const pages = files.reduce((sum, file) => sum + (file.doc?.pageCount ?? 0), 0);
+  const pages = files.reduce(
+    (sum, file) => sum + (isImageName(file.name) ? 1 : (file.doc?.pageCount ?? 0)),
+    0,
+  );
   const bytes = files.reduce((sum, file) => sum + file.size, 0);
   return { pages, size: formatBytes(bytes) };
 }

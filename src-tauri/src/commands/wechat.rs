@@ -28,8 +28,9 @@ pub async fn export_wechat_pdf(
     options: WechatExportOptions,
     out_dir: Option<String>,
 ) -> Result<TaskRecord, AppError> {
-    // 配额门控：与 run_task 一致，未激活且超额时直接返回 QuotaExceeded。
-    crate::commands::license::gate(&app)?;
+    // 配额预检：未激活且超额时直接返回 QuotaExceeded；真正扣次在成功完成后执行。
+    crate::commands::license::check_quota(&app)?;
+    let output_dir = resolve_output_dir(&app, out_dir.as_deref())?;
 
     let state = app.state::<AppState>();
     let cancel = state.start_task(&task_id, "wechat");
@@ -37,8 +38,6 @@ pub async fn export_wechat_pdf(
         .confirm_flag(&task_id)
         .ok_or_else(|| AppError::Internal("任务状态初始化失败".to_string()))?;
     state.set_progress(&task_id, 0, 0, "任务已启动");
-
-    let output_dir = resolve_output_dir(&app, out_dir.as_deref())?;
 
     let worker = app.clone();
     let worker_task_id = task_id.clone();
@@ -115,6 +114,7 @@ fn finalize(
 
     match outputs {
         Ok(files) => {
+            crate::commands::license::record_quota_use(app);
             let record = state
                 .finish_task(task_id, files.clone(), elapsed_ms, None)
                 .ok_or_else(|| AppError::Internal("任务记录已丢失".to_string()))?;

@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import { countScope, validateScope, type ScopeSelection } from "@/lib/pages";
@@ -160,6 +160,24 @@ function SegmentedControl({ field, value, onChange }: ControlProps<SegmentedFiel
 
 function NumberControl({ field, value, onChange }: ControlProps<NumberField>): ReactElement {
   const { t } = useTranslation();
+  const numeric = typeof value === "number" ? value : field.default;
+  const [draft, setDraft] = useState(String(numeric));
+
+  useEffect(() => {
+    setDraft(String(numeric));
+  }, [numeric]);
+
+  function commit(): void {
+    const raw = Number.parseFloat(draft);
+    if (!Number.isFinite(raw)) {
+      setDraft(String(numeric));
+      return;
+    }
+    const clamped = Math.min(field.max, Math.max(field.min, raw));
+    setDraft(String(clamped));
+    if (clamped !== numeric) onChange(field.key, clamped);
+  }
+
   return (
     <div className="flex items-center gap-2">
       <input
@@ -169,14 +187,16 @@ function NumberControl({ field, value, onChange }: ControlProps<NumberField>): R
         min={field.min}
         max={field.max}
         step={field.step ?? 1}
-        value={typeof value === "number" ? value : field.default}
+        value={draft}
         onChange={(event) => {
-          const raw = Number.parseFloat(event.target.value);
-          // 清空输入框时不回写，否则 NaN 会污染表单值
-          if (Number.isFinite(raw)) {
-            onChange(field.key, Math.min(field.max, Math.max(field.min, raw)));
+          const text = event.target.value;
+          setDraft(text);
+          const raw = Number.parseFloat(text);
+          if (Number.isFinite(raw) && raw >= field.min && raw <= field.max) {
+            onChange(field.key, raw);
           }
         }}
+        onBlur={commit}
       />
       {field.unitKey ? (
         <span className="shrink-0 text-xs text-ink-faint">{t(field.unitKey)}</span>

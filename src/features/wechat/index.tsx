@@ -19,10 +19,18 @@ import {
 import { useQuota } from "@/store/quota";
 import { useTasks } from "@/store/tasks";
 
-/** 轻量客户端校验：仅接受微信文章链接，非法时按钮旁给出提示，不必等后端往返。 */
-function isValidWechatUrl(raw: string): boolean {
+/** 从输入文本（支持直接粘贴微信分享文案）中提取公众号文章链接。 */
+function extractWechatUrl(raw: string): string {
   const value = raw.trim();
-  return value.startsWith("https://mp.weixin.qq.com/");
+  const match = value.match(/https?:\/\/mp\.weixin\.qq\.com\/[^\s"'<>」】）)]+/i);
+  if (match) return match[0];
+  return value;
+}
+
+/** 轻量客户端校验：接受 http/https 微信文章链接（也支持从分享文案中提取）。 */
+function isValidWechatUrl(raw: string): boolean {
+  const extracted = extractWechatUrl(raw);
+  return /^https?:\/\/mp\.weixin\.qq\.com\//i.test(extracted);
 }
 
 /**
@@ -72,11 +80,12 @@ export default function WechatPage({ feature }: FeaturePageProps): ReactElement 
 
     try {
       await exportWechatPdf(id, {
-        url: trimmed,
+        url: extractWechatUrl(trimmed),
         outputName: output.name.trim().length > 0 ? output.name.trim() : null,
         manual: manualMode,
       }, dir);
       output.commit(dir);
+      void useQuota.getState().refresh();
     } catch (error) {
       const normalized: AppError = isAppError(error)
         ? error
@@ -147,6 +156,9 @@ export default function WechatPage({ feature }: FeaturePageProps): ReactElement 
                     placeholder={t("wechat.urlPlaceholder")}
                     disabled={running}
                     onChange={(event) => setUrl(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && canRun) onRun();
+                    }}
                   />
                 </span>
               </div>
