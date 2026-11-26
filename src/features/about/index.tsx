@@ -29,6 +29,9 @@ const API_DOCS_URL = "https://www.pdfai.cn/docs";
 
 /** 更新日志：日期语言中立，描述走 i18n；新版本往数组头部加。 */
 const CHANGELOG = [
+  { date: "2026.11.26", textKey: "about.cl20261126d" },
+  { date: "2026.11.26", textKey: "about.cl20261126c" },
+  { date: "2026.11.26", textKey: "about.cl20261126b" },
   { date: "2026.11.26", textKey: "about.cl20261126" },
   { date: "2026.11.25", textKey: "about.cl20261125" },
   { date: "2026.11.12", textKey: "about.cl20261112c" },

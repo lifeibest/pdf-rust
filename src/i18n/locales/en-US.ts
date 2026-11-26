@@ -449,6 +449,9 @@ const enUS: TranslationShape = {
     privacyText:
       "Every operation runs locally. The app never uploads your files; only initial license redemption connects once.",
     changelog: "Changelog",
+    cl20261126d: "Added PDF to long image stitching and document whitening / B&W scan enhancement",
+    cl20261126c: "Added visual Organize Pages (drag to reorder, rotate, and remove pages)",
+    cl20261126b: "Added PDF Watermark and 1:1 A4 ID Card layout with security watermark",
     cl20261126: "Fixed WeChat article centering layout in exported PDFs",
     cl20261125: "Added Apple HEIC photo format support",
     cl20261112c: "Added the Compress PDF feature",
