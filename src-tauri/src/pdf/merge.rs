@@ -78,6 +78,7 @@ pub fn run(
         margin_mm: opts.margin_mm,
         image_dpi: opts.image_dpi,
         output_name: None,
+        ..Default::default()
     };
 
     for (index, source) in opts.sources.iter().enumerate() {

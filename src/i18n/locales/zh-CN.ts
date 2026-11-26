@@ -25,6 +25,18 @@ const zhCN = {
       title: "发票合并",
       desc: "把多张 A5 发票拼到一张 A4 上，方便打印",
     },
+    idcard: {
+      title: "证件拼版",
+      desc: "身份证正反面 1:1 排布到一张 A4 纸，支持漂白与防盗水印",
+    },
+    organize: {
+      title: "页面整理",
+      desc: "看着缩略图自由拖拽换序、单页旋转或删除多余页面",
+    },
+    watermark: {
+      title: "PDF 加水印",
+      desc: "给合同或资料批量加上防盗文字水印，支持居中与全页平铺",
+    },
     img2pdf: {
       title: "图片转 PDF",
       desc: "批量把图片排版为 PDF，可选纸张、边距与方向",
@@ -160,6 +172,27 @@ const zhCN = {
     previewHint: "缩略图顺序即输出顺序，可拖拽上方列表调整",
   },
 
+  watermark: {
+    needText: "请先输入水印文字",
+  },
+
+  idcard: {
+    tooMany: "一次最多选择 2 张证件照片（正面与反面）",
+  },
+
+  organize: {
+    boardTitle: "页面排布",
+    boardHint: "拖拽卡片顶部调整顺序，点底部按钮单页旋转或删除",
+    keptCount: "将保留 {{count}} 页",
+    deletedCount: "已标记删除 {{count}} 页",
+    needAtLeastOne: "至少需要保留 1 页才能保存",
+    origPage: "原 P{{page}}",
+    deletedTag: "已删除",
+    rotatePage: "顺时针旋转 90°",
+    deletePage: "删除此页",
+    restorePage: "撤销删除",
+  },
+
   rotate: {
     angle: "旋转角度",
     angleHint: "所有角度均按顺时针计算",
@@ -213,6 +246,32 @@ const zhCN = {
     minSizeHint: "小于该体积的内嵌图片将被跳过，0 表示不过滤",
     zip: "打包为 zip",
     zipHint: "多个输出文件压缩成一个 zip",
+    stitchLongImage: "拼成一张长图",
+    stitchLongImageHint: "把所选页面竖向拼成一张连续长图，方便发微信或手机一滑到底",
+    enhance: "文档画面效果",
+    enhanceValue: { none: "原图", bleach: "去灰底漂白", bw: "黑白扫描" },
+    enhanceHint: {
+      none: "保持原始照片色彩不做处理",
+      bleach: "自动漂白手机拍照的灰暗底色，保留彩色文字与红章",
+      bw: "转为高对比度黑白扫描件，字迹清晰、打印更省墨",
+    },
+    watermarkText: "水印文字",
+    watermarkTextPlaceholder: "如：仅供办理 XX 业务使用，他用无效",
+    watermarkLayout: "排布方式",
+    watermarkLayoutValue: { tile: "全页平铺（推荐）", center: "居中单行" },
+    watermarkLayoutHint: {
+      tile: "斜向均匀铺满整页，最防裁切与盗用",
+      center: "在每页正中央显示一行醒目水印",
+    },
+    watermarkColor: "水印颜色",
+    watermarkColorValue: { gray: "浅灰（推荐）", red: "红色", blue: "蓝色", black: "深黑" },
+    watermarkFontSize: "字体大小",
+    watermarkOpacity: "不透明度",
+    watermarkOpacityHint: "数值越小越淡，建议 15%~30% 不遮挡正文",
+    watermarkAngle: "旋转角度",
+    idcardWatermark: "防盗水印（选填）",
+    idcardWatermarkHint: "留空则不加水印；填写后会斜向平铺在整页上",
+    idcardWatermarkPlaceholder: "如：仅供办理 XX 业务使用，复印无效",
     scope: "作用范围",
     scopeAll: "全部页",
     scopeOdd: "奇数页",
@@ -279,6 +338,7 @@ const zhCN = {
       page: "页",
       kb: "KB",
       percent: "%",
+      deg: "°",
     },
     splitValue: {
       every_n: "每 N 页一个文件",

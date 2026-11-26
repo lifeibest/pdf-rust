@@ -26,6 +26,18 @@ const enUS: TranslationShape = {
       title: "Merge Invoices",
       desc: "Tile several A5 invoices onto one A4 sheet for easy printing",
     },
+    idcard: {
+      title: "ID Card Layout",
+      desc: "Place front & back ID photos at 1:1 scale on A4 with optional watermark",
+    },
+    organize: {
+      title: "Organize Pages",
+      desc: "Visually reorder, rotate individual pages, or delete unwanted pages",
+    },
+    watermark: {
+      title: "Add Watermark",
+      desc: "Stamp text watermarks across pages — tiled or centered",
+    },
     img2pdf: {
       title: "Images to PDF",
       desc: "Lay out a batch of images into a PDF with paper, margin and orientation",
@@ -161,6 +173,27 @@ const enUS: TranslationShape = {
     previewHint: "Thumbnail order matches output order — drag the list above to reorder",
   },
 
+  watermark: {
+    needText: "Please enter watermark text",
+  },
+
+  idcard: {
+    tooMany: "Select at most 2 ID photos (front and back)",
+  },
+
+  organize: {
+    boardTitle: "Page board",
+    boardHint: "Drag card headers to reorder; use bottom buttons to rotate or remove pages",
+    keptCount: "Keeping {{count}} pages",
+    deletedCount: "{{count}} marked for removal",
+    needAtLeastOne: "Keep at least 1 page to save",
+    origPage: "was P{{page}}",
+    deletedTag: "Removed",
+    rotatePage: "Rotate 90° clockwise",
+    deletePage: "Remove page",
+    restorePage: "Restore page",
+  },
+
   rotate: {
     angle: "Rotation",
     angleHint: "All angles are clockwise",
@@ -215,6 +248,32 @@ const enUS: TranslationShape = {
     minSizeHint: "Skip embedded images smaller than this; 0 disables the filter",
     zip: "Pack into a zip",
     zipHint: "Combine all output files into a single archive",
+    stitchLongImage: "Stitch into one long image",
+    stitchLongImageHint: "Stack all selected pages vertically into a single continuous image for easy sharing",
+    enhance: "Document enhancement",
+    enhanceValue: { none: "Original", bleach: "Whiten background", bw: "B&W scan" },
+    enhanceHint: {
+      none: "Keep original photo colors untouched",
+      bleach: "Brighten gray photo backgrounds to white while preserving colored text and stamps",
+      bw: "High-contrast black & white scan look — crisp text and ink-saving printing",
+    },
+    watermarkText: "Watermark text",
+    watermarkTextPlaceholder: "e.g. For verification use only",
+    watermarkLayout: "Layout",
+    watermarkLayoutValue: { tile: "Tiled (Recommended)", center: "Centered" },
+    watermarkLayoutHint: {
+      tile: "Repeats diagonally across the entire page for strongest protection",
+      center: "Single prominent watermark centered on each page",
+    },
+    watermarkColor: "Color",
+    watermarkColorValue: { gray: "Gray (Recommended)", red: "Red", blue: "Blue", black: "Black" },
+    watermarkFontSize: "Font size",
+    watermarkOpacity: "Opacity",
+    watermarkOpacityHint: "Lower values stay subtle; 15%–30% keeps text readable",
+    watermarkAngle: "Angle",
+    idcardWatermark: "Security watermark (optional)",
+    idcardWatermarkHint: "Leave blank to skip; tiles diagonally over the sheet when provided",
+    idcardWatermarkPlaceholder: "e.g. For ID verification only",
     scope: "Pages",
     scopeAll: "All pages",
     scopeOdd: "Odd pages",
@@ -281,6 +340,7 @@ const enUS: TranslationShape = {
       page: "pages",
       kb: "KB",
       percent: "%",
+      deg: "°",
     },
     splitValue: {
       every_n: "Every N pages",

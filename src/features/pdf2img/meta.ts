@@ -25,7 +25,8 @@ function buildRequest(
   values: OptionValues,
   context: BuildContext,
 ): TaskRequest {
-  const zip = asBoolean(values, "zip", false);
+  const stitch = asBoolean(values, "stitch", false);
+  const zip = stitch ? false : asBoolean(values, "zip", false);
   // 0 表示「不限制」，交给后端的 DEFAULT_MAX_EDGE_PX
   const maxEdge = asNumber(values, "maxEdgePx", 0);
 
@@ -40,8 +41,9 @@ function buildRequest(
       quality: asNumber(values, "quality", 85),
       maxEdgePx: maxEdge > 0 ? maxEdge : null,
       zip,
-      // 非打包模式下文件名由后端按 `{stem}_p001.png` 规则生成，用户填的名字用不上
-      outputName: zip ? context.outputName : null,
+      stitch,
+      // 长图模式或打包模式支持自定义输出名；逐页导出由后端按 `{stem}_p001.png` 命名
+      outputName: stitch || zip ? context.outputName : null,
     },
   };
 }
@@ -68,6 +70,13 @@ const pdf2img: FeatureDefinition = {
   accepts: { ext: [...PDF_EXTENSIONS], multiple: false },
   options: fields(
     scopeField(),
+    {
+      type: "switch",
+      key: "stitch",
+      labelKey: "options.stitchLongImage",
+      hintKey: "options.stitchLongImageHint",
+      default: false,
+    },
     exportDpiField(),
     imageFormatField(),
     qualityField(),

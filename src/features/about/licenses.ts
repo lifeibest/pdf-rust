@@ -75,6 +75,13 @@ export const LICENSES: LicenseEntry[] = [
     group: "backend",
   },
   {
+    name: "ab_glyph",
+    version: "0.2",
+    license: "Apache-2.0",
+    url: "https://github.com/alexheretic/ab-glyph",
+    group: "backend",
+  },
+  {
     name: "zip",
     version: "9",
     license: "MIT",

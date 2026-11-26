@@ -10,7 +10,7 @@ use image::codecs::webp::WebPEncoder;
 use image::{DynamicImage, ExtendedColorType, ImageEncoder};
 
 use crate::error::AppError;
-use crate::pdf::types::ImageFitMode;
+use crate::pdf::types::{ImageEnhanceOpt, ImageFitMode};
 
 /// 支持作为输入的图片扩展名（小写，不含点）。
 pub const IMAGE_EXTENSIONS: &[&str] = &[
@@ -186,6 +186,99 @@ fn flatten_to_rgb_white(image: &DynamicImage) -> image::RgbImage {
         }
     }
     rgb
+}
+
+/// 对手机拍摄的文档/证件照片做画面增强（去灰底漂白 / 黑白扫描效果）。
+///
+/// 算法基于图像亮度直方图估算纸张底色（第 85 百分位亮度），把底色线性提亮至纯白 `255`，
+/// 同时保留深色文字与印章对比度；零外部依赖，适合日常合同/作业/发票/身份证打印。
+pub fn enhance_document_image(image: &DynamicImage, mode: ImageEnhanceOpt) -> DynamicImage {
+    if mode == ImageEnhanceOpt::None {
+        return image.clone();
+    }
+
+    let rgb = flatten_to_rgb_white(image);
+    let (w, h) = rgb.dimensions();
+    if w == 0 || h == 0 {
+        return DynamicImage::ImageRgb8(rgb);
+    }
+
+    // 统计亮度直方图，估算纸张背景白点（第 85 百分位）与深色文字黑点（第 5 百分位）
+    let mut hist = [0u64; 256];
+    for p in rgb.pixels() {
+        let luma = ((u32::from(p[0]) * 77 + u32::from(p[1]) * 150 + u32::from(p[2]) * 29) >> 8)
+            .min(255) as usize;
+        hist[luma] += 1;
+    }
+    let total = u64::from(w) * u64::from(h);
+    let white_target = (total * 85) / 100;
+    let black_target = (total * 3) / 100;
+
+    let mut acc = 0u64;
+    let mut white_point = 220.0_f32;
+    let mut black_point = 20.0_f32;
+    let mut found_black = false;
+    for (v, &c) in hist.iter().enumerate() {
+        acc += c;
+        if !found_black && acc >= black_target {
+            black_point = (v as f32).min(110.0);
+            found_black = true;
+        }
+        if acc >= white_target {
+            white_point = (v as f32).clamp(150.0, 245.0);
+            break;
+        }
+    }
+    let span = (white_point - black_point).max(30.0);
+
+    let mut out = image::RgbImage::new(w, h);
+    match mode {
+        ImageEnhanceOpt::None => unreachable!(),
+        ImageEnhanceOpt::Bleach => {
+            // 彩色漂白：提亮灰底至纯白，同时保持红章/蓝字等高饱和度像素不泛白
+            for (x, y, p) in rgb.enumerate_pixels() {
+                let r = p[0] as f32;
+                let g = p[1] as f32;
+                let b = p[2] as f32;
+                let luma = 0.299 * r + 0.587 * g + 0.114 * b;
+                let max_c = r.max(g).max(b);
+                let min_c = r.min(g).min(b);
+                let chroma = max_c - min_c;
+
+                if luma >= white_point * 0.92 && chroma < 28.0 {
+                    out.put_pixel(x, y, image::Rgb([255, 255, 255]));
+                } else {
+                    let stretch = |c: f32| -> u8 {
+                        let norm = ((c - black_point * 0.5) / (white_point - black_point * 0.5))
+                            .clamp(0.0, 1.0);
+                        // 轻微 gamma 压深字迹，让文字更锐利
+                        (norm.powf(1.15) * 255.0).round().clamp(0.0, 255.0) as u8
+                    };
+                    out.put_pixel(x, y, image::Rgb([stretch(r), stretch(g), stretch(b)]));
+                }
+            }
+        }
+        ImageEnhanceOpt::Bw => {
+            // 黑白扫描：去色 + S 曲线对比度拉伸，字黑底白、打印省墨
+            for (x, y, p) in rgb.enumerate_pixels() {
+                let luma = 0.299 * p[0] as f32 + 0.587 * p[1] as f32 + 0.114 * p[2] as f32;
+                let norm = ((luma - black_point) / span).clamp(0.0, 1.0);
+                let v = if norm >= 0.82 {
+                    255u8
+                } else if norm <= 0.22 {
+                    16u8
+                } else {
+                    let t = (norm - 0.22) / 0.60;
+                    // Smoothstep S-curve
+                    let s = t * t * (3.0 - 2.0 * t);
+                    (16.0 + s * 239.0).round().clamp(0.0, 255.0) as u8
+                };
+                out.put_pixel(x, y, image::Rgb([v, v, v]));
+            }
+        }
+    }
+
+    DynamicImage::ImageRgb8(out)
 }
 
 /// 按指定格式与质量写出图片。

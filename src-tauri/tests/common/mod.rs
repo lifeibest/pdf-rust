@@ -86,6 +86,7 @@ pub fn make_pdf(dir: &Path, name: &str, pages: usize, page_size: PageSizeOpt) ->
         margin_mm: 0.0,
         image_dpi: 96,
         output_name: Some(format!("{name}.pdf")),
+        ..Default::default()
     };
 
     let ctx = test_ctx(&dir.join("cache"));

@@ -14,17 +14,20 @@ pub mod engine;
 pub mod export_images;
 pub mod extract_images;
 pub mod heic;
+pub mod idcard;
 pub mod images_to_pdf;
 pub mod imaging;
 pub mod info;
 pub mod invoice;
 pub mod merge;
+pub mod organize;
 pub mod ranges;
 pub mod remove_blank;
 pub mod rotate;
 pub mod split;
 pub mod thumbnails;
 pub mod types;
+pub mod watermark;
 pub mod wechat;
 
 pub use types::{

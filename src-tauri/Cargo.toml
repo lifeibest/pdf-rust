@@ -46,6 +46,8 @@ image = { version = "0.25", default-features = false, features = [
     "bmp",
     "tiff",
 ] }
+# 纯 Rust 字体光栅化（支持系统 .ttf / .ttc 中文字体），用于 PDF 加水印与证件防盗水印
+ab_glyph = "0.2"
 
 # PDFium 是本项目唯一的 PDF 引擎：合并 / 拆分 / 旋转 / 栅格化 / 图片建页 全部走它，
 # 以保证输出行为一致。运行时动态绑定 libpdfium（由 scripts/download-pdfium.mjs 下载）。

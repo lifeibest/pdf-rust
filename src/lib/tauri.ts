@@ -161,6 +161,10 @@ export interface CleanupReport {
   tempBytes: number;
 }
 
+export type ImageEnhance = "none" | "bleach" | "bw";
+export type WatermarkLayout = "tile" | "center";
+export type WatermarkColor = "gray" | "red" | "blue" | "black";
+
 /** `TaskRequest`：`kind` 与功能 id 一致，`options` 为对应功能的选项结构。 */
 export type TaskRequest =
   | { kind: "merge"; options: MergeOptions }
@@ -171,7 +175,10 @@ export type TaskRequest =
   | { kind: "pdf2img"; options: ExportImagesOptions }
   | { kind: "extractimg"; options: ExtractImagesOptions }
   | { kind: "img2pdf"; options: ImagesToPdfOptions }
-  | { kind: "invoice"; options: InvoiceMergeOptions };
+  | { kind: "invoice"; options: InvoiceMergeOptions }
+  | { kind: "watermark"; options: WatermarkOptions }
+  | { kind: "idcard"; options: IdCardOptions }
+  | { kind: "organize"; options: OrganizeOptions };
 
 export interface MergeSource {
   path: string;
@@ -242,6 +249,7 @@ export interface ExportImagesOptions {
   quality: number;
   maxEdgePx: number | null;
   zip: boolean;
+  stitch?: boolean;
   outputName: string | null;
 }
 
@@ -268,6 +276,7 @@ export interface ImagesToPdfOptions {
   imageFit: ImageFit;
   marginMm: number;
   imageDpi: number;
+  enhance?: ImageEnhance;
   outputName: string | null;
 }
 
@@ -290,6 +299,43 @@ export interface WechatExportOptions {
   outputName: string | null;
   /** 手动模式：显示文章窗口供用户完成验证 / 等待加载，确认后再导出 */
   manual: boolean;
+}
+
+/** PDF 加水印选项，与 Rust `pdf::watermark::WatermarkOptions` 对齐。 */
+export interface WatermarkOptions {
+  source: string;
+  password: string | null;
+  text: string;
+  layout: WatermarkLayout;
+  color: WatermarkColor;
+  fontSize: number;
+  opacity: number;
+  angle: number;
+  scope: PageScope;
+  outputName: string | null;
+}
+
+/** 身份证 / 证件 A4 1:1 拼版选项，与 Rust `pdf::idcard::IdCardOptions` 对齐。 */
+export interface IdCardOptions {
+  sources: string[];
+  enhance: ImageEnhance;
+  watermarkText: string | null;
+  watermarkOpacity: number;
+  outputName: string | null;
+}
+
+/** 可视化页面整理单页描述。 */
+export interface OrganizePageSpec {
+  pageIndex: number;
+  rotateDeg: number;
+}
+
+/** 可视化页面整理选项，与 Rust `pdf::organize::OrganizeOptions` 对齐。 */
+export interface OrganizeOptions {
+  source: string;
+  password: string | null;
+  pages: OrganizePageSpec[];
+  outputName: string | null;
 }
 
 /* -------------------------------------------------------------- 应用信息 */

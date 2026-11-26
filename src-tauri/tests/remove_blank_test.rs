@@ -48,6 +48,7 @@ fn make_mixed_pdf(dir: &Path, name: &str, blanks: &[bool], page_size: PageSizeOp
         margin_mm: 0.0,
         image_dpi: 96,
         output_name: Some(format!("{name}.pdf")),
+        ..Default::default()
     };
     let ctx = test_ctx(&dir.join("cache"));
     let mut progress = noop_progress();
@@ -169,6 +170,7 @@ fn threshold_controls_sensitivity() {
             margin_mm: 0.0,
             image_dpi: 96,
             output_name: Some("doc.pdf".to_string()),
+            ..Default::default()
         };
         let ctx = test_ctx(&root.join("cache"));
         let mut progress = noop_progress();

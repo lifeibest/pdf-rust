@@ -44,6 +44,7 @@ fn one_page_per_image_with_fixed_paper_size() {
             margin_mm: 20.0,
             image_dpi: 96,
             output_name: Some("a4-20mm.pdf".to_string()),
+            ..Default::default()
         },
     );
 
@@ -72,6 +73,7 @@ fn auto_page_size_follows_image_pixels_and_dpi() {
             margin_mm: 10.0,
             image_dpi: 96,
             output_name: Some("auto.pdf".to_string()),
+            ..Default::default()
         },
     );
 
@@ -105,6 +107,7 @@ fn landscape_orientation_swaps_paper_dimensions() {
             margin_mm: 0.0,
             image_dpi: 96,
             output_name: Some("landscape.pdf".to_string()),
+            ..Default::default()
         },
     );
 
@@ -172,6 +175,7 @@ fn generated_pdf_can_be_rendered_back_to_image() {
             margin_mm: 0.0,
             image_dpi: 96,
             output_name: Some("loop.pdf".to_string()),
+            ..Default::default()
         },
     );
 
@@ -222,6 +226,7 @@ fn converts_heic_image_to_pdf_on_macos() {
             margin_mm: 0.0,
             image_dpi: 96,
             output_name: Some("heic.pdf".to_string()),
+            ..Default::default()
         },
     );
 

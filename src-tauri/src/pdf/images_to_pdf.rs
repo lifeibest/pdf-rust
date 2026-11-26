@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
 use crate::pdf::types::{
-    ImageFitMode, OrientationOpt, OutputFile, PageSizeOpt, ProgressSink, TaskCtx,
+    ImageEnhanceOpt, ImageFitMode, OrientationOpt, OutputFile, PageSizeOpt, ProgressSink, TaskCtx,
 };
 use crate::pdf::{engine, imaging};
 
@@ -31,6 +31,9 @@ pub struct ImagesToPdfOptions {
     pub margin_mm: f32,
     /// `auto` 页面尺寸与 `native_dpi` 排版模式共用的像素-点换算基准
     pub image_dpi: u32,
+    /// 手机拍图文档画面增强：原图 / 去灰底漂白 / 黑白扫描
+    #[serde(default)]
+    pub enhance: ImageEnhanceOpt,
     /// 输出文件名（含 .pdf）；为空时按首个图片名推导
     pub output_name: Option<String>,
 }
@@ -44,6 +47,7 @@ impl Default for ImagesToPdfOptions {
             image_fit: ImageFitMode::Fit,
             margin_mm: 0.0,
             image_dpi: 96,
+            enhance: ImageEnhanceOpt::None,
             output_name: None,
         }
     }
@@ -102,13 +106,20 @@ pub fn append_image_page(
     image_path: &Path,
     opts: &ImagesToPdfOptions,
 ) -> Result<(), AppError> {
-    // 尝试 JPEG 零重编码直嵌（仅当扩展名为 jpg/jpeg 且 EXIF 方向为 1 时启用）
-    let raw_jpeg = try_load_passthrough_jpeg(image_path);
+    // 尝试 JPEG 零重编码直嵌（仅当不开启画面增强、扩展名为 jpg/jpeg 且 EXIF 方向为 1 时启用）
+    let raw_jpeg = if opts.enhance == ImageEnhanceOpt::None {
+        try_load_passthrough_jpeg(image_path)
+    } else {
+        None
+    };
 
     let (image_width, image_height, decoded_image) = match &raw_jpeg {
         Some((_, w, h)) => (*w, *h, None),
         None => {
-            let image = imaging::load_image(image_path)?;
+            let mut image = imaging::load_image(image_path)?;
+            if opts.enhance != ImageEnhanceOpt::None {
+                image = imaging::enhance_document_image(&image, opts.enhance);
+            }
             let (w, h) = (image.width(), image.height());
             (w, h, Some(image))
         }

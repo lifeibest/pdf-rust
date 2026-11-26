@@ -146,6 +146,19 @@ impl ImageFormatOpt {
     }
 }
 
+/// 手机拍图 / 证件照的文档画面增强模式。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ImageEnhanceOpt {
+    /// 保持原图
+    #[default]
+    None,
+    /// 去灰底漂白（保留彩色文字与红章）
+    Bleach,
+    /// 黑白扫描效果（高对比度、省墨打印）
+    Bw,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum OutputKind {

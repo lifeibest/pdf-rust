@@ -36,7 +36,10 @@ pub struct ExportImagesOptions {
     pub max_edge_px: Option<u32>,
     /// 是否把全部图片打包为单个 zip
     pub zip: bool,
-    /// zip 文件名（含 .zip）；仅在 `zip` 为真时生效
+    /// 是否将所选页面竖向拼接为一张长图（适合微信/小红书分享）
+    #[serde(default)]
+    pub stitch: bool,
+    /// 输出文件名（zip 模式下为 .zip；长图模式下为对应图片名）
     pub output_name: Option<String>,
 }
 
@@ -51,6 +54,7 @@ impl Default for ExportImagesOptions {
             quality: 92,
             max_edge_px: None,
             zip: false,
+            stitch: false,
             output_name: None,
         }
     }
@@ -84,6 +88,33 @@ pub fn run(
         .unwrap_or(DEFAULT_MAX_EDGE_PX)
         .clamp(64, 20_000);
 
+    let count = selected.len();
+
+    // 长图拼接模式：逐页渲染后垂直拼接为一张连续长图，方便微信/手机阅读
+    if opts.stitch {
+        let mut rendered = Vec::with_capacity(count);
+        for (index, page_number) in selected.iter().enumerate() {
+            ctx.check_cancel()?;
+            progress(index, count, &format!("正在渲染第 {page_number} 页"));
+            let page = document.pages().get((*page_number - 1) as PdfPageIndex)?;
+            rendered.push(render_page(&page, opts.dpi, max_edge)?);
+        }
+
+        ctx.check_cancel()?;
+        progress(count, count, "正在拼接长图");
+        let stitched = stitch_images_vertically(&rendered);
+        let (sw, sh) = (stitched.width(), stitched.height());
+        let fallback = format!("{stem}_long.{extension}");
+        let out_path =
+            crate::pdf::resolve_output_path(out_dir, opts.output_name.as_deref(), &fallback);
+        imaging::encode_image(&stitched, &out_path, opts.format, opts.quality)?;
+
+        let summary = format!("已将 {count} 页拼接为一张长图（{sw} × {sh} 像素）");
+        progress(count, count, &summary);
+        ctx.set_summary(summary);
+        return Ok(vec![OutputFile::image(&out_path)?]);
+    }
+
     let work_dir = if opts.zip {
         Some(crate::pdf::unique_temp_dir(&ctx.cache_dir, "export")?)
     } else {
@@ -91,7 +122,6 @@ pub fn run(
     };
     let target_dir = work_dir.as_deref().unwrap_or(out_dir);
 
-    let count = selected.len();
     let mut outputs = Vec::with_capacity(count);
 
     for (index, page_number) in selected.iter().enumerate() {
@@ -142,6 +172,73 @@ pub fn render_page(
 
     let bitmap = page.render_with_config(&config)?;
     Ok(bitmap.as_image()?)
+}
+
+/// 将多张页面图像垂直拼接为一张长图（白底、页间留 12px 浅灰分隔线，总高上限 30000px 防爆内存）。
+fn stitch_images_vertically(pages: &[image::DynamicImage]) -> image::DynamicImage {
+    use image::imageops::{self, FilterType};
+
+    const MAX_TOTAL_HEIGHT: u32 = 30_000;
+    const GAP_PX: u32 = 12;
+
+    if pages.is_empty() {
+        return image::DynamicImage::new_rgb8(1, 1);
+    }
+
+    let raw_max_w = pages.iter().map(|img| img.width()).max().unwrap_or(1).max(1);
+    let raw_total_h: u64 = pages.iter().map(|img| u64::from(img.height())).sum::<u64>()
+        + u64::from(GAP_PX) * (pages.len().saturating_sub(1) as u64);
+
+    // 超长文档等比缩小，避免超出 JPEG/PNG 常规高度上限或占满内存
+    let scale = if raw_total_h > u64::from(MAX_TOTAL_HEIGHT) {
+        MAX_TOTAL_HEIGHT as f64 / raw_total_h as f64
+    } else {
+        1.0
+    };
+
+    let canvas_w = ((raw_max_w as f64 * scale).round() as u32).max(1);
+    let gap = ((GAP_PX as f64 * scale).round() as u32).max(2);
+
+    let resized: Vec<image::RgbImage> = pages
+        .iter()
+        .map(|img| {
+            let rgb = img.to_rgb8();
+            if scale < 0.999 {
+                let nw = ((rgb.width() as f64 * scale).round() as u32).max(1);
+                let nh = ((rgb.height() as f64 * scale).round() as u32).max(1);
+                imageops::resize(&rgb, nw, nh, FilterType::Triangle)
+            } else {
+                rgb
+            }
+        })
+        .collect();
+
+    let total_h: u32 = resized
+        .iter()
+        .map(|img| img.height())
+        .sum::<u32>()
+        .saturating_add(gap.saturating_mul(resized.len().saturating_sub(1) as u32))
+        .max(1);
+
+    let mut canvas = image::RgbImage::from_pixel(canvas_w, total_h, image::Rgb([255, 255, 255]));
+    let mut y = 0u32;
+    for (idx, page) in resized.iter().enumerate() {
+        let x = (canvas_w.saturating_sub(page.width())) / 2;
+        imageops::replace(&mut canvas, page, i64::from(x), i64::from(y));
+        y = y.saturating_add(page.height());
+        if idx + 1 < resized.len() {
+            // 画一条柔和的浅灰分隔线，帮助区分相邻页边界
+            let line_y = y + gap / 2;
+            if line_y < total_h {
+                for lx in 0..canvas_w {
+                    canvas.put_pixel(lx, line_y, image::Rgb([230, 232, 236]));
+                }
+            }
+            y = y.saturating_add(gap);
+        }
+    }
+
+    image::DynamicImage::ImageRgb8(canvas)
 }
 
 #[cfg(test)]

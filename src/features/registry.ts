@@ -11,13 +11,16 @@ import type { FeatureCategory, FeatureDefinition, SystemPageDefinition } from ".
 import activate from "./activate/meta";
 import compress from "./compress/meta";
 import extractimg from "./extractimg/meta";
+import idcard from "./idcard/meta";
 import img2pdf from "./img2pdf/meta";
 import invoice from "./invoice/meta";
 import merge from "./merge/meta";
+import organize from "./organize/meta";
 import pdf2img from "./pdf2img/meta";
 import rotate from "./rotate/meta";
 import rmblank from "./rmblank/meta";
 import split from "./split/meta";
+import watermark from "./watermark/meta";
 import wechat from "./wechat/meta";
 import about from "./about/meta";
 import settings from "./settings/meta";
@@ -26,9 +29,12 @@ import settings from "./settings/meta";
 export const FEATURES: FeatureDefinition[] = [
   merge,
   invoice,
+  idcard,
+  organize,
   split,
   rotate,
   rmblank,
+  watermark,
   compress,
   pdf2img,
   extractimg,

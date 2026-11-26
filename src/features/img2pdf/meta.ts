@@ -17,7 +17,7 @@ import type {
   SourceFile,
 } from "@/features/types";
 import { asNumber, asString } from "@/features/types";
-import type { ImageFit, Orientation, PageSize, TaskRequest } from "@/lib/tauri";
+import type { ImageEnhance, ImageFit, Orientation, PageSize, TaskRequest } from "@/lib/tauri";
 
 function buildRequest(
   files: SourceFile[],
@@ -33,6 +33,7 @@ function buildRequest(
       imageFit: asString(values, "imageFit", "fit") as ImageFit,
       marginMm: asNumber(values, "marginMm", 0),
       imageDpi: asNumber(values, "imageDpi", 96),
+      enhance: asString(values, "enhance", "none") as ImageEnhance,
       outputName: context.outputName,
     },
   };
@@ -53,6 +54,29 @@ const img2pdf: FeatureDefinition = {
   order: 10,
   accepts: { ext: [...IMAGE_EXTENSIONS], multiple: true },
   options: fields(
+    {
+      type: "segmented",
+      key: "enhance",
+      labelKey: "options.enhance",
+      default: "none",
+      options: [
+        {
+          value: "none",
+          labelKey: "options.enhanceValue.none",
+          hintKey: "options.enhanceHint.none",
+        },
+        {
+          value: "bleach",
+          labelKey: "options.enhanceValue.bleach",
+          hintKey: "options.enhanceHint.bleach",
+        },
+        {
+          value: "bw",
+          labelKey: "options.enhanceValue.bw",
+          hintKey: "options.enhanceHint.bw",
+        },
+      ],
+    },
     pageSizeField(),
     orientationField(),
     imageFitField(),
