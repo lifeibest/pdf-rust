@@ -1,6 +1,6 @@
-import { ArrowRight, Crown, Infinity as InfinityIcon, Laptop, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Crown, Infinity as InfinityIcon, Laptop, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { ReactElement } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -8,13 +8,30 @@ import { Notice } from "@/components/Notice";
 import { AppIcon } from "@/components/AppIcon";
 import { formatRelativeTime } from "@/lib/format";
 import { CATEGORIES, FEATURES, featuresByCategory, featureById } from "@/features/registry";
-import type { FeatureDefinition } from "@/features/types";
+import type { FeatureDefinition, FeatureId } from "@/features/types";
 import { useApp } from "@/store/app";
 import { useQuota } from "@/store/quota";
 import { useTasks } from "@/store/tasks";
 
 /** 首页只展示最近若干条任务，完整记录在任务中心。 */
 const RECENT_LIMIT = 5;
+
+/** 常见办公口语搜索词，帮助普通用户用大白话秒搜功能。 */
+const SEARCH_KEYWORDS: Partial<Record<FeatureId, string>> = {
+  merge: "合并 拼接 合在一起 多份 照片 merge combine",
+  invoice: "发票 报销 打印 a4 a5 拼版 invoice",
+  idcard: "身份证 证件 护照 银行卡 复印 正反面 水印 id card",
+  organize: "整理 删页 删除 排序 调顺序 重排 旋转 organize reorder delete",
+  split: "拆分 分割 提取 拆开 单页 split extract",
+  rotate: "旋转 歪了 倒了 方向 顺时针 逆时针 rotate",
+  rmblank: "空白页 去白页 删除空白 扫描件 blank",
+  watermark: "水印 防盗 合同 样本 文字 watermark",
+  compress: "压缩 变小 瘦身 体积 邮件 上传 compress shrink",
+  pdf2img: "转图片 长图 拼长图 微信 截图 png jpg webp image long",
+  extractimg: "提取图片 抠图 原图 导出图片 extract",
+  img2pdf: "图片转 照片 苹果 heic heif 拍照 漂白 黑白 扫描 photo scan",
+  wechat: "微信 公众号 文章 链接 网页 wechat article",
+};
 
 /** 顶部优势标签：突出本地、隐私、无大小限制三大卖点。 */
 const ADVANTAGES = [
@@ -36,6 +53,39 @@ export default function HomePage(): ReactElement {
   const vip = useQuota((state) => state.license?.active ?? false);
   const tasks = useTasks((state) => state.tasks);
   const setDrawerOpen = useTasks((state) => state.setDrawerOpen);
+
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredByCategory = useMemo(() => {
+    return CATEGORIES.map((category) => {
+      const list = featuresByCategory(category.id).filter((feature) => {
+        if (!normalizedQuery) return true;
+        const haystack = [
+          t(feature.titleKey),
+          t(feature.descKey),
+          feature.id,
+          SEARCH_KEYWORDS[feature.id] ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      });
+      return { category, features: list };
+    }).filter((group) => group.features.length > 0);
+  }, [normalizedQuery, t]);
 
   const recent = tasks.slice(0, RECENT_LIMIT);
 
@@ -65,11 +115,42 @@ export default function HomePage(): ReactElement {
 
       {info !== null && !engineReady ? <Notice tone="warn">{t("home.engineWarning")}</Notice> : null}
 
+      <div className="relative">
+        <Search
+          size={15}
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"
+        />
+        <input
+          ref={searchRef}
+          type="text"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("home.searchPlaceholder")}
+          className="field pl-9 pr-9 text-sm"
+        />
+        {query.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="btn-quiet absolute right-1.5 top-1/2 h-7 w-7 -translate-y-1/2 rounded-lg px-0 py-0"
+            aria-label={t("common.clear")}
+          >
+            <X size={14} />
+          </button>
+        ) : null}
+      </div>
+
       <div className="flex flex-col gap-6">
-        {CATEGORIES.map((category) => {
-          const features = featuresByCategory(category.id);
-          if (features.length === 0) return null;
-          return (
+        {filteredByCategory.length === 0 ? (
+          <div className="card">
+            <EmptyState
+              icon={Search}
+              title={t("home.searchEmpty")}
+              hint={t("home.searchEmptyHint")}
+            />
+          </div>
+        ) : (
+          filteredByCategory.map(({ category, features }) => (
             <section key={category.id} className="flex flex-col gap-3">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
                 {t(category.titleKey)}
@@ -80,8 +161,8 @@ export default function HomePage(): ReactElement {
                 ))}
               </div>
             </section>
-          );
-        })}
+          ))
+        )}
       </div>
 
       {!vip ? (

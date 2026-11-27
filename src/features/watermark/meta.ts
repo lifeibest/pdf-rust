@@ -1,4 +1,5 @@
 import { Stamp } from "lucide-react";
+import { lazy } from "react";
 
 import { PDF_EXTENSIONS } from "@/features/accepts";
 import { fields, scopeField } from "@/features/options";
@@ -132,6 +133,7 @@ const watermark: FeatureDefinition = {
   mixedSources: false,
   buildRequest,
   validate,
+  Page: lazy(() => import("./index")),
 };
 
 export default watermark;

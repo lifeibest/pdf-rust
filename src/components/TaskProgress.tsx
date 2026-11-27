@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { CheckCircle2, Loader2, Play, Sparkles, XCircle, Ban } from "lucide-react";
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import { formatDuration, percent } from "@/lib/format";
@@ -41,6 +41,19 @@ export function TaskProgress({
 
   const ratio = percent(current, total);
   const error = splitError(errorKind, errorMessage, t);
+
+  // Cmd/Ctrl + Enter 快捷触发开始处理，减少办公操作中鼠标来回移动
+  useEffect(() => {
+    if (!canRun || running) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        void onRun();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [canRun, onRun, running]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -95,25 +108,25 @@ export function TaskProgress({
       ) : null}
 
       {!running && status === "finished" ? (
-        <div className="flex flex-col gap-3">
-          <p className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+        <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/45 p-3.5 dark:border-emerald-500/25 dark:bg-emerald-500/5">
+          <p className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
             <CheckCircle2 size={16} />
             {t("feature.runSuccess", { count: outputs.length })}
             {elapsedMs > 0 ? (
-              <span className="text-xs text-ink-faint">
+              <span className="text-xs font-normal text-ink-faint">
                 {t("tasks.elapsed", { duration: formatDuration(elapsedMs, t) })}
               </span>
             ) : null}
           </p>
           {summary ? (
-            <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-subtle px-3 py-2 text-sm text-ink">
-              <Sparkles size={15} className="mt-0.5 shrink-0 text-brand-500" />
+            <p className="flex items-start gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-xs text-ink">
+              <Sparkles size={14} className="mt-0.5 shrink-0 text-brand-500" />
               <span className="min-w-0 flex-1 break-words font-medium tabular-nums">{summary}</span>
             </p>
           ) : null}
           <OutputList outputs={outputs} />
           {onRunAnother ? (
-            <button type="button" className="btn-ghost self-start" onClick={onRunAnother}>
+            <button type="button" className="btn-ghost self-start text-xs" onClick={onRunAnother}>
               {t("feature.runAnother")}
             </button>
           ) : null}

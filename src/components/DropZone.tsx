@@ -3,7 +3,6 @@ import { FolderUp, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { extname } from "@/lib/paths";
-import { matchFeatures } from "@/features/registry";
 import { useDrop } from "@/store/drop";
 import type { FeatureDefinition } from "@/features/types";
 
@@ -27,9 +26,11 @@ export function DropZone({ feature, onPick, busy = false, compact = false }: Dro
   const dragging = useDrop((state) => state.dragging);
   const hoverPaths = useDrop((state) => state.hoverPaths);
 
-  // 只有拖入的类型确实归本功能处理时才高亮，避免每个页面都在闪
+  // 只要拖入的文件里有当前功能支持的格式，就高亮提示「松开即可添加」
   const targeted =
-    dragging && matchFeatures(hoverPaths.map(extname))[0]?.id === feature.id;
+    dragging &&
+    feature.accepts.ext.length > 0 &&
+    hoverPaths.some((path) => feature.accepts.ext.includes(extname(path)));
 
   if (compact) {
     return (

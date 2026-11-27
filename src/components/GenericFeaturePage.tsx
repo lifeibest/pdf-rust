@@ -39,10 +39,14 @@ export default function GenericFeaturePage({ feature }: FeaturePageProps): React
     enabled: showThumbs,
   });
 
-  // 约定：带 `zip` 开关的功能只在打包时才用得上输出文件名
-  // （非打包模式下后端按 `{stem}_p001.png` 之类的规则自动命名）。
+  // 约定：带 `zip` 开关的功能在打包模式或「拼成一张长图」模式下才显示输出文件名；
+  // 拼成长图时只产出单张图片，自动隐藏「打包为 zip」开关避免冲突。
   const hasZipOption = feature.options.some((field) => field.key === "zip");
-  const showName = hasZipOption ? asBoolean(values, "zip", false) : true;
+  const isStitching = asBoolean(values, "stitch", false);
+  const showName = hasZipOption ? asBoolean(values, "zip", false) || isStitching : true;
+  const visibleOptions = isStitching
+    ? feature.options.filter((field) => field.key !== "zip")
+    : feature.options;
 
   return (
     <div className="flex flex-col gap-5">
@@ -117,7 +121,7 @@ export default function GenericFeaturePage({ feature }: FeaturePageProps): React
               }
             >
               <OptionsForm
-                fields={feature.options}
+                fields={visibleOptions}
                 values={values}
                 onChange={setValue}
                 pageCount={pageCount}

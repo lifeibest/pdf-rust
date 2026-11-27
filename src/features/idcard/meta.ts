@@ -1,4 +1,5 @@
 import { CreditCard } from "lucide-react";
+import { lazy } from "react";
 
 import { IMAGE_EXTENSIONS } from "@/features/accepts";
 import { fields } from "@/features/options";
@@ -94,6 +95,7 @@ const idcard: FeatureDefinition = {
   mixedSources: false,
   buildRequest,
   validate,
+  Page: lazy(() => import("./index")),
 };
 
 export default idcard;

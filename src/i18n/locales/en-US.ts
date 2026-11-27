@@ -15,6 +15,7 @@ const enUS: TranslationShape = {
     settings: "Settings",
     about: "About",
     taskCenter: "Tasks",
+    quotaLeft: "{{remaining}}/{{limit}} free left today",
   },
 
   features: {
@@ -40,11 +41,11 @@ const enUS: TranslationShape = {
     },
     img2pdf: {
       title: "Images to PDF",
-      desc: "Lay out a batch of images into a PDF with paper, margin and orientation",
+      desc: "Supports JPG / PNG / Apple HEIC, with photo whitening and B&W scan modes",
     },
     pdf2img: {
       title: "PDF to Images",
-      desc: "Export pages as PNG / JPEG / WebP, optionally zipped",
+      desc: "Export crisp page images or stitch pages into one continuous long image",
     },
     extractimg: {
       title: "Extract PDF Images",
@@ -95,7 +96,7 @@ const enUS: TranslationShape = {
     close: "Close",
     retry: "Retry",
     open: "Open",
-    openDir: "Reveal in Finder",
+    openDir: "Show in folder",
     save: "Save",
     reset: "Reset",
     optional: "optional",
@@ -175,10 +176,21 @@ const enUS: TranslationShape = {
 
   watermark: {
     needText: "Please enter watermark text",
+    previewTitle: "Live preview",
+    previewHint: "Real-time preview on page 1 as you adjust text, angle, and opacity",
+    quickFill: "Quick fill:",
+    presetUse: "For verification use only",
+    presetInternal: "Confidential — Do Not Distribute",
+    presetSample: "SAMPLE — DO NOT COPY",
   },
 
   idcard: {
     tooMany: "Select at most 2 ID photos (front and back)",
+    sourceHint: "Pick 1–2 ID photos (front & back); portrait photos auto-rotate",
+    previewHint: "Laid out centered on A4 at exact 1:1 ID card size (85.6 × 54 mm)",
+    presetOnboarding: "For HR onboarding use only",
+    presetBank: "For banking verification only",
+    presetVerify: "For identity verification only",
   },
 
   organize: {
@@ -535,6 +547,9 @@ const enUS: TranslationShape = {
     engineWarning: "PDFium runtime is missing, processing is unavailable",
     droppedMultiple: "The dropped files match more than one tool",
     droppedPickFeature: "Choose which tool to use",
+    searchPlaceholder: "Search tools or tasks (e.g. ID card, long image, compress, watermark…)",
+    searchEmpty: "No matching tools",
+    searchEmptyHint: "Try another keyword such as merge, compress, watermark, or ID card",
   },
 
   errors: {

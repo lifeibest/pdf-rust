@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import { AppIcon } from "@/components/AppIcon";
 import { CATEGORIES, SYSTEM_PAGES, featuresByCategory } from "@/features/registry";
+import { useApp } from "@/store/app";
 import { useQuota } from "@/store/quota";
 
 /**
@@ -19,12 +20,16 @@ export function Sidebar(): ReactElement {
   const { t } = useTranslation();
   // 已激活时，「获取激活码」入口改为展示「VIP 会员」。
   const vip = useQuota((state) => state.license?.active ?? false);
+  const os = useApp((state) => state.info?.os);
+  const isMac = os !== "windows" && os !== "linux";
 
   return (
     <nav className="flex h-full w-60 shrink-0 flex-col border-r border-line bg-surface">
-      {/* 顶部留白避开 macOS 的红绿灯按钮，同时充当窗口拖拽区；
-          水平方向与下方导航项左对齐（px-3 + px-2.5），不再顶到窗口左上角 */}
-      <div data-tauri-drag-region className="shrink-0 px-3 pb-2 pt-9">
+      {/* macOS 顶部留白避开红绿灯按钮，Windows/Linux 则用紧凑间距 */}
+      <div
+        data-tauri-drag-region
+        className={clsx("shrink-0 px-3 pb-2", isMac ? "pt-9" : "pt-4")}
+      >
         <div className="flex items-center gap-2.5 px-2.5">
           <AppIcon size={26} className="rounded-lg" />
           <span className="truncate text-sm font-semibold tracking-tight text-ink">
@@ -101,7 +106,7 @@ function SidebarLink({
       end={end}
       className={({ isActive }) =>
         clsx(
-          "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm transition-colors",
+          "group relative flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm transition-colors",
           vip
             ? clsx(
                 "font-medium text-amber-600 hover:bg-amber-500/10 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300",
@@ -115,6 +120,9 @@ function SidebarLink({
     >
       {({ isActive }) => (
         <>
+          {isActive && !vip ? (
+            <span className="absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-r-full bg-brand-500" />
+          ) : null}
           <span
             className={clsx(
               "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",

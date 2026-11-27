@@ -14,6 +14,7 @@ const zhCN = {
     settings: "设置",
     about: "关于",
     taskCenter: "任务中心",
+    quotaLeft: "今日剩余 {{remaining}}/{{limit}} 次",
   },
 
   features: {
@@ -39,11 +40,11 @@ const zhCN = {
     },
     img2pdf: {
       title: "图片转 PDF",
-      desc: "批量把图片排版为 PDF，可选纸张、边距与方向",
+      desc: "支持 JPG / PNG / 苹果 HEIC，支持拍照去灰底漂白与黑白扫描",
     },
     pdf2img: {
       title: "PDF 转图片",
-      desc: "按页导出 PNG / JPEG / WebP，可打包为 zip",
+      desc: "逐页导出高清图片，或一键拼成连续长图发微信",
     },
     extractimg: {
       title: "PDF 提取图片",
@@ -174,10 +175,21 @@ const zhCN = {
 
   watermark: {
     needText: "请先输入水印文字",
+    previewTitle: "实时效果预览",
+    previewHint: "以首页为基准实时预览水印位置、角度与透明度",
+    quickFill: "常用：",
+    presetUse: "仅供办理业务使用，他用无效",
+    presetInternal: "内部资料 严禁外传",
+    presetSample: "样本 复印无效",
   },
 
   idcard: {
     tooMany: "一次最多选择 2 张证件照片（正面与反面）",
+    sourceHint: "选择 1~2 张证件照（正面与反面），竖拍会自动摆正",
+    previewHint: "将按标准身份证 1:1 真实尺寸（85.6 × 54mm）居中排布到 A4 纸上",
+    presetOnboarding: "仅供办理入职使用，复印无效",
+    presetBank: "仅供办理银行卡业务使用",
+    presetVerify: "仅供实名认证，他用无效",
   },
 
   organize: {
@@ -530,6 +542,9 @@ const zhCN = {
     engineWarning: "PDFium 运行库未就绪，处理功能暂不可用",
     droppedMultiple: "拖入的文件可以匹配多个功能",
     droppedPickFeature: "选择要使用的功能",
+    searchPlaceholder: "搜索功能或场景（如：身份证、长图、变小、水印、微信、漂白…）",
+    searchEmpty: "没有找到匹配的功能",
+    searchEmptyHint: "试试换个关键词，例如「合并」「压缩」「水印」「身份证」",
   },
 
   errors: {
